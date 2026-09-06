@@ -1,23 +1,9 @@
 name: ${COMPOSE_PROJECT_NAME:-babyguess-dev}
 
 services:
-  data-permissions:
-    image: busybox:1.36.1
-    restart: "no"
-    user: "0:0"
-    command: ["sh", "-c", "chown -R 1000:1000 /app/data"]
-    read_only: true
-    security_opt:
-      - no-new-privileges:true
-    volumes:
-      - babyguess-data:/app/data
-
   babyguess:
     image: ghcr.io/sh4tterh4nd/babyguess:${BABYGUESS_IMAGE_TAG:-dev}
     restart: unless-stopped
-    depends_on:
-      data-permissions:
-        condition: service_completed_successfully
     ports:
       - "${BABYGUESS_HOST_ADDRESS:-0.0.0.0}:${BABYGUESS_HOST_PORT:-8080}:8080"
     environment:

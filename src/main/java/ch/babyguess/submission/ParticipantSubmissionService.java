@@ -85,7 +85,7 @@ public class ParticipantSubmissionService {
 
         var delivery = new ParticipantLinkDelivery(UUID.randomUUID(), participant, now);
         deliveryRepository.save(delivery);
-        return new SubmissionReceipt(delivery.getId(), participant, rawToken);
+        return new SubmissionReceipt(delivery.getId(), participant, rawToken, false);
     }
 
     @Transactional(readOnly = true)
@@ -132,7 +132,8 @@ public class ParticipantSubmissionService {
     private SubmissionReceipt createDelivery(Participant participant, java.time.Instant now) {
         var delivery = new ParticipantLinkDelivery(UUID.randomUUID(), participant, now);
         deliveryRepository.save(delivery);
-        return new SubmissionReceipt(delivery.getId(), participant, tokenService.tokenFor(participant.getId()));
+        return new SubmissionReceipt(
+                delivery.getId(), participant, tokenService.tokenFor(participant.getId()), true);
     }
 
     private Participant findByToken(String rawToken) {

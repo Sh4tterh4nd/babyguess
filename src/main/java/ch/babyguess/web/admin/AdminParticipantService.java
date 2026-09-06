@@ -123,7 +123,7 @@ public class AdminParticipantService {
             throw new NoRetryableLinkDeliveryException(
                     "The configured token secret does not match this participant");
         }
-        return new SubmissionReceipt(delivery.getId(), participant, rawToken);
+        return new SubmissionReceipt(delivery.getId(), participant, rawToken, true);
     }
 
     private Map<UUID, List<SubmissionVersion>> groupSubmissions() {

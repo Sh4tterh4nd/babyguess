@@ -21,10 +21,17 @@
             </select>
         </form>
     </div>
-    <div class="sealed-mark" aria-hidden="true">✓</div>
-    <h1 th:text="#{thanks.heading}">Your prediction is sealed.</h1>
-    <p class="intro" th:text="#{thanks.body}">Check your inbox for your private edit link.</p>
-    <p class="privacy-note" th:text="#{thanks.nonEnumerating}">This confirmation protects participant privacy.</p>
+    <div class="sealed-mark" aria-hidden="true" th:text="${existingParticipant} ? '!' : '✓'">✓</div>
+    <th:block th:if="${existingParticipant}">
+        <h1 th:text="#{thanks.existing.heading}">This email address is already taking part.</h1>
+        <p class="intro" th:text="#{thanks.existing.body}">We sent your private edit link again.</p>
+        <p class="form-message error" th:text="#{thanks.existing.notStored}">The guesses you just entered were not
+            saved.</p>
+    </th:block>
+    <th:block th:unless="${existingParticipant}">
+        <h1 th:text="#{thanks.heading}">Your prediction is sealed.</h1>
+        <p class="intro" th:text="#{thanks.body}">Check your inbox for your private edit link.</p>
+    </th:block>
     <a class="text-link" th:href="@{/}" th:text="#{thanks.back}">Back to the event</a>
 </main>
 </body>

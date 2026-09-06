@@ -2711,7 +2711,7 @@ button {
 /* Event branding: a proof sheet for two fixed identity assets. */
 body.public-branding-background:not(.public-reveal-page) {
     background:
-        linear-gradient(90deg, rgb(237 241 255 / 96%) 0 38%, rgb(237 241 255 / 78%) 72%, rgb(237 241 255 / 70%)),
+        linear-gradient(270deg, rgb(237 241 255 / 96%) 0 38%, rgb(237 241 255 / 78%) 72%, rgb(237 241 255 / 70%)),
         url("/branding/background") center / cover fixed;
 }
 

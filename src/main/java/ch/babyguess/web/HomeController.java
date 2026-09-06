@@ -78,8 +78,10 @@ public class HomeController {
             return "home";
         }
 
+        boolean existingParticipant;
         try {
             var receipt = submissionService.submit(form.toSubmission(locale));
+            existingParticipant = receipt.existingParticipant();
             deliveryService.deliver(receipt, publicUrlProperties.baseUrl());
         } catch (EventClosedException exception) {
             bindingResult.reject("submission.closed");
@@ -94,6 +96,7 @@ public class HomeController {
         }
 
         redirectAttributes.addFlashAttribute("submitted", true);
+        redirectAttributes.addFlashAttribute("existingParticipant", existingParticipant);
         return "redirect:/thanks";
     }
 

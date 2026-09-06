@@ -145,6 +145,11 @@ timestamps are never authoritative.
 - Saving through the URL creates a new immutable submission version and retains the same participant token.
 - Once the event is closed, the URL may show the participant's effective submission but cannot modify it.
 - Requests involving an existing or unknown email address must use non-enumerating responses where practical.
+- The submission confirmation is a deliberate exception. When the submitted email address already belongs to a
+  participant, the confirmation says so, states that the edit link has been sent again, and warns that the
+  values just entered were not stored. Telling participants the truth about their lost input was judged more
+  valuable than hiding which addresses take part, because the only fact disclosed is participation in one
+  private event to someone who already knows the address.
 - The admin can resend a participant's edit email without changing their token or submission.
 
 ## 8. Name comparison

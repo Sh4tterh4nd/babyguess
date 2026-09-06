@@ -1,9 +1,12 @@
 package ch.babyguess.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -93,6 +96,35 @@ class ParticipantFlowTest {
         assertThat(submissionRepository.count()).isEqualTo(versions);
         assertThat(second.rawToken()).isEqualTo(first.rawToken());
         assertThat(second.toString()).doesNotContain(second.rawToken()).contains("REDACTED");
+        assertThat(first.existingParticipant()).isFalse();
+        assertThat(second.existingParticipant()).isTrue();
+    }
+
+    @Test
+    void repeatedEmailTellsTheVisitorTheNewGuessWasNotStored() throws Exception {
+        var email = randomEmail();
+        mockMvc.perform(validSubmission(email).with(csrf()))
+                .andExpect(flash().attribute("existingParticipant", false));
+        long versions = submissionRepository.count();
+
+        mockMvc.perform(validSubmission(email).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/thanks"))
+                .andExpect(flash().attribute("existingParticipant", true));
+
+        assertThat(submissionRepository.count()).isEqualTo(versions);
+    }
+
+    @Test
+    void thanksPageRendersBothOutcomes() throws Exception {
+        mockMvc.perform(get("/thanks"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("sealed")));
+
+        mockMvc.perform(get("/thanks").flashAttr("existingParticipant", true))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("already taking part")))
+                .andExpect(content().string(containsString("were not saved")));
     }
 
     @Test

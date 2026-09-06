@@ -31,7 +31,7 @@ class ComposeConfigurationTest {
         assertThat(environment.get("BABYGUESS_PUBLIC_BASE_URL"))
                 .isEqualTo("${BABYGUESS_PUBLIC_BASE_URL:?Set BABYGUESS_PUBLIC_BASE_URL}");
         assertThat(application.get("read_only")).isEqualTo(true);
-        assertThat(services).containsKey("data-permissions");
+        assertThat(services).containsOnlyKeys("babyguess");
     }
 
     @Test
