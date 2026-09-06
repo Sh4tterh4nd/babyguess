@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{edit.title(${eventTitle})}">Review your prediction — BabyGuess</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="edit-page" th:classappend="${branding.backgroundAvailable} ? ' public-branding-background' : ''">
+<header class="site-header">
+    <a class="wordmark" th:href="@{/}">
+        <img class="wordmark-logo" th:if="${branding.logoAvailable}" th:src="@{/branding/logo}" alt="">
+        <span class="wordmark-title" th:text="${branding.eventTitle}">BabyGuess</span>
+    </a>
+    <div class="header-actions">
+        <form class="language-picker" method="get">
+            <label class="visually-hidden" for="language" th:text="#{language.label}">Language</label>
+            <select id="language" name="lang" onchange="this.form.submit()">
+                <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{language.english}">English</option>
+                <option value="de" th:selected="${#locale.language == 'de'}" th:text="#{language.german}">Deutsch</option>
+            </select>
+        </form>
+        <a class="text-link" th:href="@{/}" th:text="#{thanks.back}">Back to the event</a>
+    </div>
+</header>
+
+<main class="edit-layout">
+    <header class="edit-heading">
+        <p class="event-prompt" th:text="${eventTitle}">BabyGuess</p>
+        <h1 th:text="#{edit.heading}">Your sealed prediction</h1>
+        <p class="intro" th:text="#{edit.intro}">Saving creates a new immutable version.</p>
+        <p class="identity-note" th:text="#{edit.identity(${displayName}, ${emailAddress})}">Private link owner</p>
+    </header>
+
+    <section class="event-sheet edit-sheet">
+        <div class="save-message" role="status" th:if="${param.saved}" th:text="#{edit.saved}">Saved.</div>
+        <div class="closed-message" role="status" th:unless="${eventOpen}" th:text="#{edit.closed}">The event is closed.</div>
+
+        <form class="submission-form" method="post" th:object="${editForm}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="error-summary" role="alert" th:if="${#fields.hasAnyErrors()}">
+                <strong th:text="#{submission.error.summary}">Check the marked details and save again.</strong>
+                <ul>
+                    <li th:each="error : ${#fields.allErrors()}" th:text="${error}">Validation error</li>
+                </ul>
+            </div>
+
+            <fieldset class="name-fields">
+                <legend th:text="#{submission.names}">Baby name guesses</legend>
+                <div class="field" th:each="index : ${#numbers.sequence(0, maximumNameGuesses - 1)}">
+                    <label th:for="${'editNameGuess-' + index}" th:text="#{submission.name.position(${index + 1})}">Guess</label>
+                    <input type="text" maxlength="160" autocomplete="off"
+                           th:id="${'editNameGuess-' + index}"
+                           th:required="${index == 0}"
+                           th:disabled="${!eventOpen}"
+                           th:field="*{nameGuesses[__${index}__]}">
+                </div>
+                <p class="field-help" th:text="#{submission.names.help}">Order matters.</p>
+            </fieldset>
+
+            <div class="field" th:if="${sexEnabled}">
+                <label for="predictedSex"><span th:text="#{submission.sex}">Sex</span></label>
+                <select id="predictedSex" th:field="*{predictedSex}" th:disabled="${!eventOpen}">
+                    <option value="" th:text="#{submission.sex.none}">No prediction</option>
+                    <option value="GIRL" th:text="#{submission.sex.girl}">Girl</option>
+                    <option value="BOY" th:text="#{submission.sex.boy}">Boy</option>
+                </select>
+            </div>
+
+            <div class="field" th:if="${birthDateEnabled}">
+                <label for="predictedBirthDate"><span th:text="#{submission.birthDate}">Birth date</span></label>
+                <input id="predictedBirthDate" type="date" th:field="*{predictedBirthDate}" th:disabled="${!eventOpen}">
+            </div>
+
+            <div class="field" th:if="${birthWeightEnabled}">
+                <label for="predictedBirthWeightGrams"><span th:text="#{submission.birthWeight}">Birth weight</span></label>
+                <input id="predictedBirthWeightGrams" type="number" min="1" step="1" inputmode="numeric"
+                       th:field="*{predictedBirthWeightGrams}" th:disabled="${!eventOpen}" th:errorclass="invalid">
+            </div>
+
+            <button type="submit" th:if="${eventOpen}" th:text="#{edit.action}">Save a new version</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

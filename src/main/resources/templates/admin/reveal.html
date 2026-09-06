@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{admin.reveal.title}">Prepare the reveal - BabyGuess</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="admin-page reveal-admin-page">
+<header class="admin-header">
+    <a class="wordmark" th:href="@{/}">
+        <img class="wordmark-logo" th:if="${branding.logoAvailable}" th:src="@{/branding/logo}" alt="">
+        <span class="wordmark-title" th:text="${branding.eventTitle}">BabyGuess</span>
+    </a>
+    <div class="header-actions">
+        <a class="text-link" th:href="@{/admin}" th:text="#{admin.participants.settings}">Event settings</a>
+        <a class="text-link" th:href="@{/admin/branding}" th:text="#{admin.branding.navigation}">Branding</a>
+        <a class="text-link" th:href="@{/admin/participants}" th:text="#{admin.participants.navigation}">Participants</a>
+        <a class="text-link" th:href="@{/admin/email}" th:text="#{admin.email.navigation}">Email</a>
+        <a class="text-link" th:href="@{/}" th:text="#{admin.viewEvent}">View event</a>
+        <form class="language-picker" method="get" th:action="@{/admin/reveal}">
+            <label class="visually-hidden" for="language" th:text="#{language.label}">Language</label>
+            <select id="language" name="lang" onchange="this.form.submit()">
+                <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{language.english}">English</option>
+                <option value="de" th:selected="${#locale.language == 'de'}" th:text="#{language.german}">Deutsch</option>
+            </select>
+        </form>
+        <form class="inline-form" method="post" th:action="@{/logout}">
+            <button class="text-button" type="submit" th:text="#{admin.signOut}">Sign out</button>
+        </form>
+    </div>
+</header>
+
+<main class="admin-layout reveal-layout">
+    <aside class="reveal-progress">
+        <h2 th:text="#{admin.reveal.progress}">Reveal preparation</h2>
+        <ol>
+            <li th:classappend="${reveal.actualDetailsSaved} ? ' step-complete' : ' step-current'">
+                <a href="#actual-details" th:text="#{admin.reveal.step.details}">Actual details</a>
+            </li>
+            <li th:classappend="${reveal.actualDetailsSaved} ? ' step-current' : ''">
+                <a href="#name-review" th:text="#{admin.reveal.step.names}">Name review</a>
+            </li>
+            <li>
+                <a href="#leaderboard-preview" th:text="#{admin.reveal.step.preview}">Leaderboard preview</a>
+            </li>
+            <li th:classappend="${publication.published} ? ' step-complete' : ''">
+                <a href="#publish-reveal" th:text="#{admin.reveal.step.publish}">Publish</a>
+            </li>
+        </ol>
+        <p class="private-preview-note" th:unless="${publication.published}" th:text="#{admin.reveal.private}">Everything on this page remains private.</p>
+        <p class="private-preview-note published-note" th:if="${publication.published}"
+           th:text="#{admin.reveal.public(${publication.publishedAt})}">The reveal is public.</p>
+    </aside>
+
+    <article class="event-sheet reveal-sheet">
+        <header class="sheet-heading reveal-heading">
+            <span class="sealed-preview-mark" aria-hidden="true">✦</span>
+            <h1 th:text="#{admin.reveal.heading}">Prepare the reveal</h1>
+            <p th:text="#{admin.reveal.intro}">Record what happened, review close names, and inspect every point before publishing.</p>
+        </header>
+
+        <div class="save-message" role="status" th:if="${detailsSaved}"
+             th:text="#{admin.reveal.details.saved}">Actual details saved and scores recalculated.</div>
+        <div class="save-message" role="status" th:if="${decisionSaved}"
+             th:text="#{admin.reveal.decision.saved}">Name decision saved and scores recalculated.</div>
+        <div class="delivery-message delivery-message-error" role="alert" th:if="${decisionUnavailable}"
+             th:text="#{admin.reveal.decision.unavailable}">That name decision is no longer available.</div>
+        <div class="save-message" role="status" th:if="${published}"
+             th:text="#{admin.reveal.publish.success(${revealEmailsSent}, ${revealEmailsFailed})}">Reveal published.</div>
+        <div class="save-message" role="status" th:if="${alreadyPublished}"
+             th:text="#{admin.reveal.publish.already}">The reveal was already published.</div>
+        <div class="save-message" role="status" th:if="${revealEmailRetried}"
+             th:text="#{admin.reveal.delivery.retry.sent}">Reveal email sent.</div>
+        <div class="delivery-message delivery-message-error" role="alert" th:if="${revealEmailRetryFailed}"
+             th:text="#{admin.reveal.delivery.retry.failed}">Reveal email could not be sent.</div>
+        <div class="delivery-message delivery-message-error" role="alert"
+             th:if="${publicationConfirmationRequired == true || publicationNotReady == true || publicationStale == true || revealEmailRetryUnavailable == true}">
+            <span th:if="${publicationConfirmationRequired}" th:text="#{admin.reveal.publish.confirmationRequired}">Confirm publication.</span>
+            <span th:if="${publicationNotReady}" th:text="#{admin.reveal.publish.notReady}">The reveal is not ready.</span>
+            <span th:if="${publicationStale}" th:text="#{admin.error.stale}">The event changed.</span>
+            <span th:if="${revealEmailRetryUnavailable}" th:text="#{admin.reveal.delivery.retry.unavailable}">Delivery cannot be retried.</span>
+        </div>
+
+        <section class="reveal-gate" th:if="${!reveal.eventClosed}">
+            <h2 th:text="#{admin.reveal.open.heading}">The prediction window is still open</h2>
+            <p th:if="${reveal.deadline != null}"
+               th:text="#{admin.reveal.open.body(${reveal.deadline})}">Actual details can be saved after the deadline.</p>
+            <p th:unless="${reveal.deadline != null}" th:text="#{admin.reveal.open.noDeadline}">Set a deadline first.</p>
+            <a class="text-link" th:href="@{/admin}" th:text="#{admin.reveal.open.action}">Review event settings</a>
+        </section>
+
+        <section class="reveal-section" id="actual-details" th:if="${reveal.eventClosed}">
+            <header class="reveal-section-heading">
+                <h2 th:text="#{admin.reveal.details.heading}">What happened?</h2>
+                <p th:text="#{admin.reveal.details.intro}">The name is required. Missing optional results stay out of scoring.</p>
+            </header>
+
+            <form class="event-form actual-details-form" method="post" th:action="@{/admin/reveal/details}"
+                  th:object="${actualDetailsForm}">
+                <input type="hidden" th:field="*{version}">
+                <div class="error-summary" role="alert" th:if="${#fields.hasAnyErrors()}">
+                    <strong th:text="#{admin.reveal.error.summary}">Check the actual details and save again.</strong>
+                    <ul>
+                        <li th:each="error : ${#fields.allErrors()}" th:text="${error}">Validation error</li>
+                    </ul>
+                </div>
+
+                <div class="field field-wide">
+                    <label for="actualName" th:text="#{admin.reveal.details.name}">Baby's name</label>
+                    <input id="actualName" type="text" maxlength="160" required autocomplete="off"
+                           th:field="*{actualName}" th:errorclass="invalid">
+                    <p class="field-error" th:errors="*{actualName}">Name error</p>
+                </div>
+                <div class="actual-detail-grid">
+                    <div class="field" th:if="${reveal.sexEnabled}">
+                        <label for="actualSex" th:text="#{admin.reveal.details.sex}">Sex</label>
+                        <select id="actualSex" th:field="*{actualSex}">
+                            <option value="" th:text="#{admin.reveal.details.awaiting}">Awaiting result</option>
+                            <option value="GIRL" th:text="#{submission.sex.girl}">Girl</option>
+                            <option value="BOY" th:text="#{submission.sex.boy}">Boy</option>
+                        </select>
+                    </div>
+                    <div class="field" th:if="${reveal.birthDateEnabled}">
+                        <label for="actualBirthDate" th:text="#{admin.reveal.details.date}">Birth date</label>
+                        <input id="actualBirthDate" type="date" th:field="*{actualBirthDate}">
+                    </div>
+                    <div class="field" th:if="${reveal.birthWeightEnabled}">
+                        <label for="actualBirthWeightGrams" th:text="#{admin.reveal.details.weight}">Birth weight in grams</label>
+                        <input id="actualBirthWeightGrams" type="number" min="1" step="1" inputmode="numeric"
+                               th:field="*{actualBirthWeightGrams}" th:errorclass="invalid">
+                        <p class="field-error" th:errors="*{actualBirthWeightGrams}">Weight error</p>
+                    </div>
+                </div>
+                <button class="reveal-save-button" type="submit" th:text="#{admin.reveal.details.action}">Save and calculate preview</button>
+            </form>
+        </section>
+
+        <section class="reveal-section name-review-section" id="name-review"
+                 th:if="${reveal.eventClosed && reveal.actualDetailsSaved}">
+            <header class="reveal-section-heading">
+                <h2 th:text="#{admin.reveal.names.heading}">Review close names</h2>
+                <p th:text="#{admin.reveal.names.intro}">Automatic matches already count. Only approve another spelling when it means the same name.</p>
+            </header>
+
+            <div class="candidate-list" th:if="${!reveal.candidates.empty}">
+                <article class="name-candidate" th:each="candidate : ${reveal.candidates}">
+                    <div>
+                        <strong th:text="${candidate.displayName}">Saria</strong>
+                        <span th:text="#{admin.reveal.names.guessedBy(${candidate.participantCount})}">Guessed by one participant</span>
+                    </div>
+                    <div class="candidate-actions">
+                        <form method="post" th:action="@{/admin/reveal/candidates}">
+                            <input type="hidden" name="variant" th:value="${candidate.displayName}">
+                            <input type="hidden" name="decision" value="ACCEPTED">
+                            <button type="submit" th:text="#{admin.reveal.names.accept}">Accept</button>
+                        </form>
+                        <form method="post" th:action="@{/admin/reveal/candidates}">
+                            <input type="hidden" name="variant" th:value="${candidate.displayName}">
+                            <input type="hidden" name="decision" value="REJECTED">
+                            <button class="secondary-button" type="submit" th:text="#{admin.reveal.names.reject}">Reject</button>
+                        </form>
+                    </div>
+                </article>
+            </div>
+            <p class="review-empty" th:if="${reveal.candidates.empty}"
+               th:text="#{admin.reveal.names.empty}">No unresolved close-name suggestions.</p>
+
+            <div class="decision-ledger" th:if="${!reveal.decisions.empty}">
+                <h3 th:text="#{admin.reveal.names.decisions}">Saved decisions</h3>
+                <div class="decision-row" th:each="nameDecision : ${reveal.decisions}">
+                    <div>
+                        <strong th:text="${nameDecision.displayName}">Saria</strong>
+                        <span class="decision-state" th:classappend="${nameDecision.accepted} ? ' accepted' : ' rejected'"
+                              th:text="${nameDecision.accepted} ? #{admin.reveal.names.accepted} : #{admin.reveal.names.rejected}">Accepted</span>
+                    </div>
+                    <form method="post" th:action="@{/admin/reveal/decisions}">
+                        <input type="hidden" name="variant" th:value="${nameDecision.displayName}">
+                        <input type="hidden" name="decision" th:value="${nameDecision.accepted ? 'REJECTED' : 'ACCEPTED'}">
+                        <button class="text-button" type="submit"
+                                th:text="${nameDecision.accepted} ? #{admin.reveal.names.changeReject} : #{admin.reveal.names.changeAccept}">Change</button>
+                    </form>
+                </div>
+            </div>
+
+            <form class="manual-variant-form" method="post" th:action="@{/admin/reveal/variants}"
+                  th:object="${variantForm}">
+                <div class="field">
+                    <label for="variant" th:text="#{admin.reveal.names.manual}">Accept another spelling</label>
+                    <div class="inline-field-action">
+                        <input id="variant" type="text" maxlength="160" required autocomplete="off"
+                               th:field="*{variant}" th:errorclass="invalid">
+                        <button type="submit" th:text="#{admin.reveal.names.manual.action}">Accept spelling</button>
+                    </div>
+                    <p class="field-help" th:text="#{admin.reveal.names.manual.help}">Use this when a valid spelling was not suggested.</p>
+                    <p class="field-error" th:errors="*{variant}">Variant error</p>
+                </div>
+            </form>
+        </section>
+
+        <section class="reveal-section preview-section" id="leaderboard-preview"
+                 th:if="${reveal.eventClosed && reveal.actualDetailsSaved}">
+            <header class="reveal-section-heading preview-heading">
+                <div>
+                    <h2 th:text="#{admin.reveal.preview.heading}">Private leaderboard preview</h2>
+                    <p th:text="#{admin.reveal.preview.intro(${reveal.eligibleParticipantCount})}">Scores for effective submissions.</p>
+                </div>
+                <span class="private-badge" th:unless="${publication.published}" th:text="#{admin.reveal.preview.badge}">Not public</span>
+                <span class="private-badge published-badge" th:if="${publication.published}" th:text="#{admin.reveal.preview.published}">Published</span>
+            </header>
+
+            <section class="actual-announcement" aria-labelledby="actual-name-heading">
+                <p th:text="#{admin.reveal.preview.announcement}">The answer</p>
+                <h3 id="actual-name-heading" th:text="${reveal.actualName}">Sarah</h3>
+                <dl>
+                    <div th:if="${reveal.sexEnabled}">
+                        <dt th:text="#{submission.sex}">Sex</dt>
+                        <dd th:if="${reveal.actualSex == null}" th:text="#{admin.reveal.details.awaiting}">Awaiting</dd>
+                        <dd th:if="${reveal.actualSex != null && reveal.actualSex.name() == 'GIRL'}" th:text="#{submission.sex.girl}">Girl</dd>
+                        <dd th:if="${reveal.actualSex != null && reveal.actualSex.name() == 'BOY'}" th:text="#{submission.sex.boy}">Boy</dd>
+                    </div>
+                    <div th:if="${reveal.birthDateEnabled}">
+                        <dt th:text="#{submission.birthDate}">Birth date</dt>
+                        <dd th:text="${reveal.actualBirthDate != null ? reveal.actualBirthDate : #messages.msg('admin.reveal.details.awaiting')}">Awaiting</dd>
+                    </div>
+                    <div th:if="${reveal.birthWeightEnabled}">
+                        <dt th:text="#{submission.birthWeight}">Birth weight</dt>
+                        <dd th:text="${reveal.actualBirthWeightGrams != null ? reveal.actualBirthWeightGrams + ' g' : #messages.msg('admin.reveal.details.awaiting')}">Awaiting</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <p class="review-empty" th:if="${reveal.leaderboard.empty}"
+               th:text="#{admin.reveal.preview.empty}">No effective submissions can be scored.</p>
+
+            <ol class="preview-leaderboard" th:if="${!reveal.leaderboard.empty}">
+                <li th:each="entry : ${reveal.leaderboard}" th:value="${entry.place}"
+                    th:classappend="${entry.place == 1} ? ' winner-entry' : ''">
+                    <header class="leaderboard-line">
+                        <span class="place" th:text="${entry.place}">1</span>
+                        <div>
+                            <h3 th:text="${entry.displayName}">Alice</h3>
+                            <p th:if="${entry.exactName}" th:text="#{admin.reveal.preview.name.exact(${entry.matchedName})}">Exact name</p>
+                            <p th:if="${entry.equivalentName}" th:text="#{admin.reveal.preview.name.equivalent(${entry.matchedName})}">Equivalent name</p>
+                            <p th:if="${!entry.exactName && !entry.equivalentName}"
+                               th:text="#{admin.reveal.preview.name.none}">No name match</p>
+                        </div>
+                        <strong class="total-score" th:text="#{admin.reveal.preview.points(${entry.totalScore})}">3.4 points</strong>
+                    </header>
+
+                    <details class="score-breakdown" th:open="${entry.place == 1}">
+                        <summary th:text="#{admin.reveal.preview.breakdown}">Show score breakdown</summary>
+                        <dl>
+                            <div>
+                                <dt th:text="#{admin.scoring.name}">Name</dt>
+                                <dd>
+                                    <span th:text="${#strings.listJoin(entry.nameGuesses, ', ')}">Sara, Noah</span>
+                                    <strong th:text="#{admin.reveal.preview.points(${entry.nameScore})}">1 point</strong>
+                                </dd>
+                            </div>
+                            <div th:if="${reveal.sexEnabled}" th:with="result=${entry.sex}">
+                                <dt th:text="#{submission.sex}">Sex</dt>
+                                <dd>
+                                    <span th:if="${result.awaiting}" th:text="#{admin.reveal.preview.awaiting}">Awaiting actual result</span>
+                                    <span th:if="${result.missing}" th:text="#{admin.reveal.preview.missing}">No prediction</span>
+                                    <span th:if="${result.exact && result.prediction == 'GIRL'}" th:text="#{submission.sex.girl}">Girl</span>
+                                    <span th:if="${result.exact && result.prediction == 'BOY'}" th:text="#{submission.sex.boy}">Boy</span>
+                                    <span th:if="${result.wrong && result.prediction == 'GIRL'}" th:text="#{admin.reveal.preview.wrong(${#messages.msg('submission.sex.girl')})}">Girl — incorrect</span>
+                                    <span th:if="${result.wrong && result.prediction == 'BOY'}" th:text="#{admin.reveal.preview.wrong(${#messages.msg('submission.sex.boy')})}">Boy — incorrect</span>
+                                    <strong th:text="#{admin.reveal.preview.points(${result.score})}">1 point</strong>
+                                </dd>
+                            </div>
+                            <div th:if="${reveal.birthDateEnabled}" th:with="result=${entry.birthDate}">
+                                <dt th:text="#{submission.birthDate}">Birth date</dt>
+                                <dd>
+                                    <span th:if="${result.awaiting}" th:text="#{admin.reveal.preview.awaiting}">Awaiting actual result</span>
+                                    <span th:if="${result.missing}" th:text="#{admin.reveal.preview.missing}">No prediction</span>
+                                    <span th:if="${result.exact}" th:text="#{admin.reveal.preview.exact(${result.prediction})}">Exact</span>
+                                    <span th:if="${result.close}" th:text="#{admin.reveal.preview.date.close(${result.prediction}, ${result.difference}, ${result.percentage})}">Close</span>
+                                    <span th:if="${result.wrong}" th:text="#{admin.reveal.preview.date.wrong(${result.prediction}, ${result.difference})}">Incorrect</span>
+                                    <strong th:text="#{admin.reveal.preview.points(${result.score})}">1 point</strong>
+                                </dd>
+                            </div>
+                            <div th:if="${reveal.birthWeightEnabled}" th:with="result=${entry.birthWeight}">
+                                <dt th:text="#{submission.birthWeight}">Birth weight</dt>
+                                <dd>
+                                    <span th:if="${result.awaiting}" th:text="#{admin.reveal.preview.awaiting}">Awaiting actual result</span>
+                                    <span th:if="${result.missing}" th:text="#{admin.reveal.preview.missing}">No prediction</span>
+                                    <span th:if="${result.exact}" th:text="#{admin.reveal.preview.exact(${result.prediction})}">Exact</span>
+                                    <span th:if="${result.close}" th:text="#{admin.reveal.preview.weight.close(${result.prediction}, ${result.difference}, ${result.percentage})}">Close</span>
+                                    <span th:if="${result.wrong}" th:text="#{admin.reveal.preview.weight.wrong(${result.prediction}, ${result.difference})}">Incorrect</span>
+                                    <strong th:text="#{admin.reveal.preview.points(${result.score})}">1 point</strong>
+                                </dd>
+                            </div>
+                        </dl>
+                    </details>
+                </li>
+            </ol>
+        </section>
+
+        <section class="reveal-section publish-section" id="publish-reveal"
+                 th:if="${reveal.eventClosed && reveal.actualDetailsSaved}">
+            <header class="reveal-section-heading">
+                <h2 th:text="#{admin.reveal.publish.heading}">Publish the reveal</h2>
+                <p th:unless="${publication.published}" th:text="#{admin.reveal.publish.intro}">Make the result public and send the reveal.</p>
+                <p th:if="${publication.published}" th:text="#{admin.reveal.publish.liveIntro}">Corrections now update the public result immediately.</p>
+            </header>
+
+            <form class="publish-confirmation" method="post" th:action="@{/admin/reveal/publish}"
+                  th:unless="${publication.published}">
+                <input type="hidden" name="version" th:value="${publication.eventVersion}">
+                <label>
+                    <input type="checkbox" name="confirmed" value="true" required>
+                    <span th:text="#{admin.reveal.publish.confirm}">I have checked the details and scores.</span>
+                </label>
+                <p th:text="#{admin.reveal.publish.warning}">Publication cannot be made private again from this screen.</p>
+                <button class="publish-button" type="submit" th:text="#{admin.reveal.publish.action}">Publish results</button>
+            </form>
+
+            <div class="publication-live" th:if="${publication.published}">
+                <div class="publication-stamp">
+                    <span th:text="#{admin.reveal.publish.status}">Published</span>
+                    <strong th:text="${publication.publishedAt}">5 September 2026</strong>
+                    <a class="text-link" th:href="@{/results}" th:text="#{admin.reveal.publish.view}">View public reveal</a>
+                </div>
+                <dl class="reveal-delivery-summary">
+                    <div><dt th:text="#{admin.reveal.delivery.total}">Recipients</dt><dd th:text="${publication.deliveryTotal}">2</dd></div>
+                    <div><dt th:text="#{admin.reveal.delivery.sent}">Sent</dt><dd th:text="${publication.deliverySent}">1</dd></div>
+                    <div><dt th:text="#{admin.reveal.delivery.failed}">Needs attention</dt><dd th:text="${publication.deliveryFailed + publication.deliveryPending}">1</dd></div>
+                </dl>
+                <p class="publication-correction-note" th:text="#{admin.reveal.publish.corrections}">Corrections update the public page; successful emails are not resent.</p>
+
+                <div class="reveal-delivery-issues" th:if="${!publication.deliveryIssues.empty}">
+                    <h3 th:text="#{admin.reveal.delivery.issues}">Email delivery issues</h3>
+                    <article th:each="issue : ${publication.deliveryIssues}">
+                        <div>
+                            <strong th:text="${issue.displayName}">Alice</strong>
+                            <span th:text="${issue.failed} ? #{admin.participants.delivery.failed} : #{admin.participants.delivery.pending}">Failed</span>
+                            <small th:if="${issue.failureCode != null}" th:text="${issue.failureCode}">MAIL_NOT_CONFIGURED</small>
+                        </div>
+                        <form method="post" th:action="@{/admin/reveal/deliveries/{id}/retry(id=${issue.deliveryId})}">
+                            <button class="secondary-button" type="submit" th:text="#{admin.reveal.delivery.retry}">Retry email</button>
+                        </form>
+                    </article>
+                </div>
+                <p class="review-empty" th:if="${publication.deliveryTotal > 0 && publication.deliveryIssues.empty}"
+                   th:text="#{admin.reveal.delivery.complete}">All reveal emails were sent.</p>
+                <p class="review-empty" th:if="${publication.deliveryTotal == 0}"
+                   th:text="#{admin.reveal.delivery.empty}">There were no effective participants to email.</p>
+            </div>
+        </section>
+    </article>
+</main>
+</body>
+</html>

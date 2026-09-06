@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{thanks.title}">Prediction received — BabyGuess</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="centered-page" th:classappend="${branding.backgroundAvailable} ? ' public-branding-background' : ''">
+<main class="auth-panel thanks-panel">
+    <div class="panel-heading-row">
+        <a class="wordmark" th:href="@{/}">
+            <img class="wordmark-logo" th:if="${branding.logoAvailable}" th:src="@{/branding/logo}" alt="">
+            <span class="wordmark-title" th:text="${branding.eventTitle}">BabyGuess</span>
+        </a>
+        <form class="language-picker" method="get" th:action="@{/thanks}">
+            <label class="visually-hidden" for="language" th:text="#{language.label}">Language</label>
+            <select id="language" name="lang" onchange="this.form.submit()">
+                <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{language.english}">English</option>
+                <option value="de" th:selected="${#locale.language == 'de'}" th:text="#{language.german}">Deutsch</option>
+            </select>
+        </form>
+    </div>
+    <div class="sealed-mark" aria-hidden="true">✓</div>
+    <h1 th:text="#{thanks.heading}">Your prediction is sealed.</h1>
+    <p class="intro" th:text="#{thanks.body}">Check your inbox for your private edit link.</p>
+    <p class="privacy-note" th:text="#{thanks.nonEnumerating}">This confirmation protects participant privacy.</p>
+    <a class="text-link" th:href="@{/}" th:text="#{thanks.back}">Back to the event</a>
+</main>
+</body>
+</html>

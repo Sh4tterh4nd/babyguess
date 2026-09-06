@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{admin.title}">Prepare the event — BabyGuess</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="admin-page">
+<header class="admin-header">
+    <a class="wordmark" th:href="@{/}">
+        <img class="wordmark-logo" th:if="${branding.logoAvailable}" th:src="@{/branding/logo}" alt="">
+        <span class="wordmark-title" th:text="${branding.eventTitle}">BabyGuess</span>
+    </a>
+    <div class="header-actions">
+        <a class="text-link" th:href="@{/admin/branding}" th:text="#{admin.branding.navigation}">Branding</a>
+        <a class="text-link" th:href="@{/admin/participants}" th:text="#{admin.participants.navigation}">Participants</a>
+        <a class="text-link" th:href="@{/admin/reveal}" th:text="#{admin.reveal.navigation}">Reveal</a>
+        <a class="text-link" th:href="@{/admin/email}" th:text="#{admin.email.navigation}">Email</a>
+        <a class="text-link" th:href="@{/}" th:text="#{admin.viewEvent}">View event</a>
+        <form class="language-picker" method="get" th:action="@{/admin}">
+            <label class="visually-hidden" for="language" th:text="#{language.label}">Language</label>
+            <select id="language" name="lang" onchange="this.form.submit()">
+                <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{language.english}">English</option>
+                <option value="de" th:selected="${#locale.language == 'de'}" th:text="#{language.german}">Deutsch</option>
+            </select>
+        </form>
+        <form class="inline-form" method="post" th:action="@{/logout}">
+            <button class="text-button" type="submit" th:text="#{admin.signOut}">Sign out</button>
+        </form>
+    </div>
+</header>
+
+<main class="admin-layout">
+    <aside class="event-margin">
+        <h2 th:text="#{admin.margin.heading}">On this sheet</h2>
+        <nav aria-label="Configuration sections">
+            <a href="#event-details">
+                <strong th:text="#{admin.section.event}">Event details</strong>
+                <span th:text="#{admin.margin.event}">Name the event and set its deadline.</span>
+            </a>
+            <a href="#predictions">
+                <strong th:text="#{admin.section.predictions}">Predictions</strong>
+                <span th:text="#{admin.margin.predictions}">Choose the available details.</span>
+            </a>
+            <a href="#scoring">
+                <strong th:text="#{admin.section.scoring}">Scoring rules</strong>
+                <span th:text="#{admin.margin.scoring}">Balance categories and tolerances.</span>
+            </a>
+        </nav>
+    </aside>
+
+    <article class="event-sheet">
+        <header class="sheet-heading">
+            <h1 th:text="#{admin.heading}">Prepare the guessing event</h1>
+            <p th:text="#{admin.intro}">Set what friends can predict and when guesses close.</p>
+        </header>
+
+        <div class="save-message" role="status" th:if="${saved}" th:text="#{admin.saved}">Event settings saved.</div>
+
+        <form class="event-form" method="post" th:action="@{/admin}" th:object="${eventForm}">
+            <input type="hidden" th:field="*{version}">
+
+            <div class="error-summary" role="alert" th:if="${#fields.hasAnyErrors()}">
+                <strong th:text="#{admin.error.summary}">Check the marked settings and save again.</strong>
+                <ul th:if="${#fields.hasGlobalErrors()}">
+                    <li th:each="error : ${#fields.globalErrors()}" th:text="${error}">Configuration conflict</li>
+                </ul>
+            </div>
+
+            <section class="form-section" id="event-details">
+                <h2 th:text="#{admin.section.event}">Event details</h2>
+
+                <div class="field field-wide">
+                    <label for="title" th:text="#{admin.event.title}">Public title</label>
+                    <input id="title" type="text" maxlength="160" required th:field="*{title}" th:errorclass="invalid">
+                    <p class="field-error" th:errors="*{title}">Title error</p>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="submissionDeadline" th:text="#{admin.event.deadline}">Submission deadline</label>
+                        <input id="submissionDeadline" type="datetime-local" required
+                               th:field="*{submissionDeadline}" th:errorclass="invalid">
+                        <p class="field-error" th:errors="*{submissionDeadline}">Deadline error</p>
+                        <p class="field-error" th:errors="*{deadlineResolvable}">Daylight-saving error</p>
+                    </div>
+                    <div class="field">
+                        <label for="eventTimezone" th:text="#{admin.event.timezone}">Event timezone</label>
+                        <input id="eventTimezone" type="text" list="timezone-options" maxlength="80" required
+                               autocomplete="off" th:field="*{eventTimezone}" th:errorclass="invalid">
+                        <datalist id="timezone-options">
+                            <option th:each="timezone : ${timezoneSuggestions}" th:value="${timezone}"></option>
+                        </datalist>
+                        <p class="field-error" th:errors="*{eventTimezone}">Timezone error</p>
+                        <p class="field-error" th:errors="*{timezoneValid}">Timezone error</p>
+                    </div>
+                </div>
+                <p class="section-help" th:text="#{admin.event.deadline.help}">The deadline uses the event timezone.</p>
+                <p class="section-help" th:text="#{admin.event.timezone.help}">Use an IANA timezone.</p>
+            </section>
+
+            <section class="form-section" id="predictions">
+                <h2 th:text="#{admin.section.predictions}">Predictions</h2>
+
+                <div class="field compact-field">
+                    <label for="maximumNameGuesses" th:text="#{admin.predictions.names}">Name guesses per person</label>
+                    <input id="maximumNameGuesses" type="number" min="1" required
+                           th:field="*{maximumNameGuesses}" th:errorclass="invalid">
+                    <p class="field-error" th:errors="*{maximumNameGuesses}">Name count error</p>
+                    <p class="field-help" th:text="#{admin.predictions.names.help}">At least one name is required.</p>
+                </div>
+
+                <fieldset class="category-switches">
+                    <legend class="visually-hidden" th:text="#{admin.section.predictions}">Predictions</legend>
+                    <label class="switch-row" for="sexEnabled">
+                        <input id="sexEnabled" type="checkbox" th:field="*{sexEnabled}">
+                        <span th:text="#{admin.predictions.sex}">Let people predict the baby's sex</span>
+                    </label>
+                    <label class="switch-row" for="birthDateEnabled">
+                        <input id="birthDateEnabled" type="checkbox" th:field="*{birthDateEnabled}">
+                        <span th:text="#{admin.predictions.date}">Let people predict the birth date</span>
+                    </label>
+                    <label class="switch-row" for="birthWeightEnabled">
+                        <input id="birthWeightEnabled" type="checkbox" th:field="*{birthWeightEnabled}">
+                        <span th:text="#{admin.predictions.weight}">Let people predict the birth weight</span>
+                    </label>
+                </fieldset>
+            </section>
+
+            <section class="form-section" id="scoring">
+                <h2 th:text="#{admin.section.scoring}">Scoring rules</h2>
+
+                <div class="score-line">
+                    <div>
+                        <strong th:text="#{admin.scoring.name}">Name</strong>
+                        <label class="inline-check" for="rankedNameScoring">
+                            <input id="rankedNameScoring" type="checkbox" th:field="*{rankedNameScoring}">
+                            <span th:text="#{admin.scoring.name.ranked}">Rank name guesses</span>
+                        </label>
+                    </div>
+                    <div class="field score-input">
+                        <label for="nameWeight" th:text="#{admin.scoring.weight}">Category weight</label>
+                        <input id="nameWeight" type="number" min="0" step="0.01" required
+                               th:field="*{nameWeight}" th:errorclass="invalid">
+                        <p class="field-error" th:errors="*{nameWeight}">Weight error</p>
+                    </div>
+                </div>
+
+                <div class="score-line" th:classappend="${eventForm.sexEnabled} ? '' : ' category-muted'">
+                    <strong th:text="#{admin.category.sex}">Sex</strong>
+                    <div class="field score-input">
+                        <label for="sexWeight" th:text="#{admin.scoring.weight}">Category weight</label>
+                        <input id="sexWeight" type="number" min="0" step="0.01" required
+                               th:field="*{sexWeight}" th:errorclass="invalid">
+                        <p class="field-error" th:errors="*{sexWeight}">Weight error</p>
+                    </div>
+                </div>
+
+                <div class="score-line score-line-tolerance" th:classappend="${eventForm.birthDateEnabled} ? '' : ' category-muted'">
+                    <strong th:text="#{admin.category.date}">Birth date</strong>
+                    <div class="field score-input">
+                        <label for="birthDateWeight" th:text="#{admin.scoring.weight}">Category weight</label>
+                        <input id="birthDateWeight" type="number" min="0" step="0.01" required
+                               th:field="*{birthDateWeight}" th:errorclass="invalid">
+                        <p class="field-error" th:errors="*{birthDateWeight}">Weight error</p>
+                    </div>
+                    <div class="field score-input tolerance-input">
+                        <label for="birthDateToleranceDays" th:text="#{admin.scoring.date.tolerance}">Deviation in days</label>
+                        <input id="birthDateToleranceDays" type="number" min="0" required
+                               th:field="*{birthDateToleranceDays}" th:errorclass="invalid">
+                        <p class="field-error" th:errors="*{birthDateToleranceDays}">Tolerance error</p>
+                    </div>
+                </div>
+
+                <div class="score-line score-line-tolerance" th:classappend="${eventForm.birthWeightEnabled} ? '' : ' category-muted'">
+                    <strong th:text="#{admin.category.weight}">Birth weight</strong>
+                    <div class="field score-input">
+                        <label for="birthWeightWeight" th:text="#{admin.scoring.weight}">Category weight</label>
+                        <input id="birthWeightWeight" type="number" min="0" step="0.01" required
+                               th:field="*{birthWeightWeight}" th:errorclass="invalid">
+                        <p class="field-error" th:errors="*{birthWeightWeight}">Weight error</p>
+                    </div>
+                    <div class="field score-input tolerance-input">
+                        <label for="birthWeightToleranceGrams" th:text="#{admin.scoring.weight.tolerance}">Deviation in grams</label>
+                        <input id="birthWeightToleranceGrams" type="number" min="0" required
+                               th:field="*{birthWeightToleranceGrams}" th:errorclass="invalid">
+                        <p class="field-error" th:errors="*{birthWeightToleranceGrams}">Tolerance error</p>
+                    </div>
+                </div>
+                <p class="section-help" th:text="#{admin.scoring.tolerance.help}">Scores decrease to zero at the tolerance.</p>
+            </section>
+
+            <footer class="form-actions">
+                <button type="submit" th:text="#{admin.save}">Save changes</button>
+            </footer>
+        </form>
+    </article>
+</main>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{login.title}">Admin sign in — BabyGuess</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="centered-page">
+<main class="auth-panel">
+    <div class="panel-heading-row">
+        <a class="wordmark" th:href="@{/}">
+            <img class="wordmark-logo" th:if="${branding.logoAvailable}" th:src="@{/branding/logo}" alt="">
+            <span class="wordmark-title" th:text="${branding.eventTitle}">BabyGuess</span>
+        </a>
+        <form class="language-picker" method="get" th:action="@{/login}">
+            <label class="visually-hidden" for="language" th:text="#{language.label}">Language</label>
+            <select id="language" name="lang" onchange="this.form.submit()">
+                <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{language.english}">English</option>
+                <option value="de" th:selected="${#locale.language == 'de'}" th:text="#{language.german}">Deutsch</option>
+            </select>
+        </form>
+    </div>
+    <h1 th:text="#{login.heading}">Admin sign in</h1>
+    <p class="form-message error" th:if="${param.error}" th:text="#{login.error}">Incorrect credentials.</p>
+    <p class="form-message" th:if="${param.logout}" th:text="#{login.signedOut}">Signed out.</p>
+    <form method="post" th:action="@{/login}">
+        <label for="username" th:text="#{login.username}">Username</label>
+        <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+        <label for="password" th:text="#{login.password}">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button type="submit" th:text="#{login.action}">Sign in</button>
+    </form>
+    <a class="text-link" th:href="@{/}" th:text="#{login.back}">Back to the event</a>
+</main>
+</body>
+</html>

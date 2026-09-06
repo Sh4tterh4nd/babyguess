@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{admin.participants.title}">Participant ledger - BabyGuess</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="admin-page">
+<header class="admin-header">
+    <a class="wordmark" th:href="@{/}">
+        <img class="wordmark-logo" th:if="${branding.logoAvailable}" th:src="@{/branding/logo}" alt="">
+        <span class="wordmark-title" th:text="${branding.eventTitle}">BabyGuess</span>
+    </a>
+    <div class="header-actions">
+        <a class="text-link" th:href="@{/admin}" th:text="#{admin.participants.settings}">Event settings</a>
+        <a class="text-link" th:href="@{/admin/branding}" th:text="#{admin.branding.navigation}">Branding</a>
+        <a class="text-link" th:href="@{/admin/reveal}" th:text="#{admin.reveal.navigation}">Reveal</a>
+        <a class="text-link" th:href="@{/admin/email}" th:text="#{admin.email.navigation}">Email</a>
+        <a class="text-link" th:href="@{/}" th:text="#{admin.viewEvent}">View event</a>
+        <form class="language-picker" method="get" th:action="@{/admin/participants}">
+            <label class="visually-hidden" for="language" th:text="#{language.label}">Language</label>
+            <select id="language" name="lang" onchange="this.form.submit()">
+                <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{language.english}">English</option>
+                <option value="de" th:selected="${#locale.language == 'de'}" th:text="#{language.german}">Deutsch</option>
+            </select>
+        </form>
+        <form class="inline-form" method="post" th:action="@{/logout}">
+            <button class="text-button" type="submit" th:text="#{admin.signOut}">Sign out</button>
+        </form>
+    </div>
+</header>
+
+<main class="admin-layout admin-ledger-layout">
+    <aside class="ledger-summary">
+        <h2 th:text="#{admin.participants.summary}">At a glance</h2>
+        <dl class="ledger-totals">
+            <div>
+                <dt th:text="#{admin.participants.total}">Participants</dt>
+                <dd th:text="${dashboard.participantCount}">0</dd>
+            </div>
+            <div>
+                <dt th:text="#{admin.participants.effective}">Effective submissions</dt>
+                <dd th:text="${dashboard.effectiveSubmissionCount}">0</dd>
+            </div>
+            <div th:classappend="${dashboard.failedDeliveryCount > 0} ? ' total-warning' : ''">
+                <dt th:text="#{admin.participants.deliveryIssues}">Email issues</dt>
+                <dd th:text="${dashboard.failedDeliveryCount}">0</dd>
+            </div>
+        </dl>
+        <p class="ledger-deadline" th:if="${dashboard.deadline != null}">
+            <strong th:text="#{admin.participants.deadline}">Current deadline</strong>
+            <span th:text="${dashboard.deadline}">5 September 2026, 18:00</span>
+        </p>
+        <p class="ledger-deadline" th:unless="${dashboard.deadline != null}"
+           th:text="#{admin.participants.deadline.none}">No deadline is configured.</p>
+    </aside>
+
+    <article class="event-sheet participant-sheet">
+        <header class="sheet-heading">
+            <h1 th:text="#{admin.participants.heading}">Participant ledger</h1>
+            <p th:text="#{admin.participants.intro}">Review the version that counts and the private history behind it.</p>
+        </header>
+
+        <div class="save-message" role="status" th:if="${deliverySent}"
+             th:text="#{admin.participants.retry.sent(${deliverySent})}">Edit link sent.</div>
+        <div class="delivery-message delivery-message-error" role="alert" th:if="${deliveryFailed}"
+             th:text="#{admin.participants.retry.failed(${deliveryFailed})}">The edit link could not be sent.</div>
+        <div class="delivery-message delivery-message-error" role="alert" th:if="${deliveryUnavailable}"
+             th:text="#{admin.participants.retry.unavailable}">This delivery is no longer available for retry.</div>
+
+        <section class="ledger-empty" th:if="${dashboard.participants.empty}">
+            <h2 th:text="#{admin.participants.empty.heading}">No sealed predictions yet</h2>
+            <p th:text="#{admin.participants.empty.body}">Participants will appear here after they save a prediction.</p>
+            <a class="text-link" th:href="@{/}" th:text="#{admin.viewEvent}">View event</a>
+        </section>
+
+        <div class="participant-ledger" th:unless="${dashboard.participants.empty}">
+            <section class="participant-record" th:each="participant : ${dashboard.participants}">
+                <header class="participant-record-heading">
+                    <div>
+                        <h2 th:text="${participant.displayName}">Alice</h2>
+                        <a class="participant-email" th:href="|mailto:${participant.emailAddress}|"
+                           th:text="${participant.emailAddress}">alice@example.test</a>
+                        <p th:text="#{admin.participants.joined(${participant.createdAt})}">Joined today</p>
+                    </div>
+                    <span class="version-count"
+                          th:text="#{admin.participants.versionCount(${participant.history.size()})}">1 version</span>
+                </header>
+
+                <div class="participant-record-grid">
+                    <section class="effective-prediction">
+                        <h3 th:text="#{admin.participants.current}">Prediction that counts</h3>
+                        <div class="no-effective" th:if="${participant.effectiveSubmission == null}">
+                            <p th:text="#{admin.participants.current.none}">No version falls within the current deadline.</p>
+                        </div>
+                        <div th:if="${participant.effectiveSubmission != null}"
+                             th:with="submission=${participant.effectiveSubmission}">
+                            <p class="version-time"
+                               th:text="#{admin.participants.saved(${submission.submittedAt})}">Saved today</p>
+                            <ol class="guess-list">
+                                <li th:each="name : ${submission.nameGuesses}" th:text="${name}">Sara</li>
+                            </ol>
+                            <dl class="prediction-values">
+                                <div>
+                                    <dt th:text="#{submission.sex}">Sex</dt>
+                                    <dd th:if="${submission.predictedSex == null}"
+                                        th:text="#{admin.participants.notProvided}">Not provided</dd>
+                                    <dd th:if="${submission.predictedSex != null && submission.predictedSex.name() == 'GIRL'}"
+                                        th:text="#{submission.sex.girl}">Girl</dd>
+                                    <dd th:if="${submission.predictedSex != null && submission.predictedSex.name() == 'BOY'}"
+                                        th:text="#{submission.sex.boy}">Boy</dd>
+                                </div>
+                                <div>
+                                    <dt th:text="#{submission.birthDate}">Birth date</dt>
+                                    <dd th:text="${submission.predictedBirthDate != null ? submission.predictedBirthDate : #messages.msg('admin.participants.notProvided')}">Not provided</dd>
+                                </div>
+                                <div>
+                                    <dt th:text="#{submission.birthWeight}">Birth weight</dt>
+                                    <dd th:text="${submission.predictedBirthWeightGrams != null ? submission.predictedBirthWeightGrams + ' g' : #messages.msg('admin.participants.notProvided')}">Not provided</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </section>
+
+                    <aside class="delivery-panel">
+                        <h3 th:text="#{admin.participants.delivery}">Private link delivery</h3>
+                        <div th:if="${participant.delivery == null}">
+                            <span class="delivery-status status-none" th:text="#{admin.participants.delivery.none}">No attempt</span>
+                        </div>
+                        <div th:if="${participant.delivery != null}">
+                            <span class="delivery-status status-sent" th:if="${participant.delivery.sent}"
+                                  th:text="#{admin.participants.delivery.sent}">Sent</span>
+                            <span class="delivery-status status-failed" th:if="${participant.delivery.failed}"
+                                  th:text="#{admin.participants.delivery.failed}">Failed</span>
+                            <span class="delivery-status status-pending" th:if="${participant.delivery.pending}"
+                                  th:text="#{admin.participants.delivery.pending}">Pending</span>
+                            <dl class="delivery-facts">
+                                <div>
+                                    <dt th:text="#{admin.participants.delivery.attempts}">Attempts</dt>
+                                    <dd th:text="${participant.delivery.attemptCount}">1</dd>
+                                </div>
+                                <div>
+                                    <dt th:text="#{admin.participants.delivery.lastAttempt}">Last attempt</dt>
+                                    <dd th:text="${participant.delivery.lastAttemptAt != null ? participant.delivery.lastAttemptAt : #messages.msg('admin.participants.notProvided')}">Today</dd>
+                                </div>
+                                <div th:if="${participant.delivery.failureCode != null}">
+                                    <dt th:text="#{admin.participants.delivery.reason}">Reason</dt>
+                                    <dd class="failure-code" th:text="${participant.delivery.failureCode}">MAIL_NOT_CONFIGURED</dd>
+                                </div>
+                            </dl>
+                            <form method="post" th:if="${participant.delivery.retryable}"
+                                  th:action="@{/admin/participants/{id}/retry-link(id=${participant.id})}">
+                                <button class="retry-button" type="submit"
+                                        th:text="#{admin.participants.retry}">Retry edit link</button>
+                            </form>
+                        </div>
+                    </aside>
+                </div>
+
+                <details class="submission-history">
+                    <summary th:text="#{admin.participants.history(${participant.history.size()})}">Show submission history</summary>
+                    <div class="version-list">
+                        <article class="history-version" th:each="submission : ${participant.history}"
+                                 th:classappend="${submission.effective} ? ' effective-version' : (${submission.afterDeadline} ? ' late-version' : '')">
+                            <header>
+                                <strong th:text="#{admin.participants.version(${submission.versionNumber})}">Version 1</strong>
+                                <span th:text="${submission.submittedAt}">Today</span>
+                                <em th:if="${submission.effective}" th:text="#{admin.participants.version.effective}">Counts</em>
+                                <em th:if="${!submission.effective && submission.afterDeadline}"
+                                    th:text="#{admin.participants.version.afterDeadline}">Outside deadline</em>
+                                <em th:if="${!submission.effective && !submission.afterDeadline}"
+                                    th:text="#{admin.participants.version.superseded}">Superseded</em>
+                            </header>
+                            <p class="history-names" th:text="${#strings.listJoin(submission.nameGuesses, ', ')}">Sara, Noah</p>
+                            <dl class="history-values">
+                                <div>
+                                    <dt th:text="#{submission.sex}">Sex</dt>
+                                    <dd th:if="${submission.predictedSex == null}"
+                                        th:text="#{admin.participants.notProvided}">Not provided</dd>
+                                    <dd th:if="${submission.predictedSex != null && submission.predictedSex.name() == 'GIRL'}"
+                                        th:text="#{submission.sex.girl}">Girl</dd>
+                                    <dd th:if="${submission.predictedSex != null && submission.predictedSex.name() == 'BOY'}"
+                                        th:text="#{submission.sex.boy}">Boy</dd>
+                                </div>
+                                <div>
+                                    <dt th:text="#{submission.birthDate}">Birth date</dt>
+                                    <dd th:text="${submission.predictedBirthDate != null ? submission.predictedBirthDate : #messages.msg('admin.participants.notProvided')}">2026-11-10</dd>
+                                </div>
+                                <div>
+                                    <dt th:text="#{submission.birthWeight}">Birth weight</dt>
+                                    <dd th:text="${submission.predictedBirthWeightGrams != null ? submission.predictedBirthWeightGrams + ' g' : #messages.msg('admin.participants.notProvided')}">3500 g</dd>
+                                </div>
+                            </dl>
+                        </article>
+                    </div>
+                </details>
+            </section>
+        </div>
+    </article>
+</main>
+</body>
+</html>

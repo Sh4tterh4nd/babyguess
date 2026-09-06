@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: babyguess
+  datasource:
+    url: "${BABYGUESS_DATABASE_URL:jdbc:h2:file:./data/babyguess;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH}"
+    username: "${BABYGUESS_DATABASE_USERNAME:sa}"
+    password: "${BABYGUESS_DATABASE_PASSWORD:}"
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  thymeleaf:
+    cache: false
+  messages:
+    basename: messages
+    fallback-to-system-locale: false
+  servlet:
+    multipart:
+      max-file-size: 6MB
+      max-request-size: 7MB
+
+server:
+  port: "${BABYGUESS_PORT:8088}"
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: "${BABYGUESS_SECURE_COOKIES:false}"
+
+babyguess:
+  branding:
+    directory: "${BABYGUESS_BRANDING_DIRECTORY:./data/branding}"
+  admin:
+    username: "${BABYGUESS_ADMIN_USERNAME:admin}"
+    password: "${BABYGUESS_ADMIN_PASSWORD:admin12345678}"
+  tokens:
+    secret: "${BABYGUESS_TOKEN_SECRET:development-only-token-secret-change-me}"
+  public:
+    base-url: "${BABYGUESS_PUBLIC_BASE_URL:http://localhost:8088/}"
+  mail:
+    from: "${BABYGUESS_MAIL_FROM:}"
+  secrets:
+    encryption-key: "${BABYGUESS_SECRET_ENCRYPTION_KEY:}"

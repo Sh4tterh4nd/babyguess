@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{error.notFound.title}">Private link not found — BabyGuess</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="centered-page" th:classappend="${branding.backgroundAvailable} ? ' public-branding-background' : ''">
+<main class="auth-panel">
+    <a class="wordmark" th:href="@{/}">
+        <img class="wordmark-logo" th:if="${branding.logoAvailable}" th:src="@{/branding/logo}" alt="">
+        <span class="wordmark-title" th:text="${branding.eventTitle}">BabyGuess</span>
+    </a>
+    <h1 th:text="#{error.notFound.heading}">This private link is not valid.</h1>
+    <p class="intro" th:text="#{error.notFound.body}">Check the complete link from the email.</p>
+    <a class="text-link" th:href="@{/}" th:text="#{thanks.back}">Back to the event</a>
+</main>
+</body>
+</html>

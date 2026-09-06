@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: "${BABYGUESS_DATABASE_URL}"
+    username: "${BABYGUESS_DATABASE_USERNAME}"
+    password: "${BABYGUESS_DATABASE_PASSWORD}"
+  thymeleaf:
+    cache: true
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: "${BABYGUESS_SECURE_COOKIES:true}"

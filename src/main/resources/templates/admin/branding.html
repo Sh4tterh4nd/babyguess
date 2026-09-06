@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{admin.branding.title}">Event branding - BabyGuess</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="admin-page branding-admin-page">
+<header class="admin-header">
+    <a class="wordmark" th:href="@{/}">
+        <img class="wordmark-logo" th:if="${branding.logoAvailable}" th:src="@{/branding/logo}" alt="">
+        <span class="wordmark-title" th:text="${branding.eventTitle}">BabyGuess</span>
+    </a>
+    <div class="header-actions">
+        <a class="text-link" th:href="@{/admin}" th:text="#{admin.participants.settings}">Event settings</a>
+        <a class="text-link" th:href="@{/admin/participants}" th:text="#{admin.participants.navigation}">Participants</a>
+        <a class="text-link" th:href="@{/admin/reveal}" th:text="#{admin.reveal.navigation}">Reveal</a>
+        <a class="text-link" th:href="@{/admin/email}" th:text="#{admin.email.navigation}">Email</a>
+        <a class="text-link" th:href="@{/}" th:text="#{admin.viewEvent}">View event</a>
+        <form class="language-picker" method="get" th:action="@{/admin/branding}">
+            <label class="visually-hidden" for="language" th:text="#{language.label}">Language</label>
+            <select id="language" name="lang" onchange="this.form.submit()">
+                <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{language.english}">English</option>
+                <option value="de" th:selected="${#locale.language == 'de'}" th:text="#{language.german}">Deutsch</option>
+            </select>
+        </form>
+        <form class="inline-form" method="post" th:action="@{/logout}">
+            <button class="text-button" type="submit" th:text="#{admin.signOut}">Sign out</button>
+        </form>
+    </div>
+</header>
+
+<main class="admin-layout branding-layout">
+    <aside class="brand-proof">
+        <h2 th:text="#{admin.branding.proof.heading}">Current identity</h2>
+        <div class="brand-proof-wordmark">
+            <img th:if="${branding.logoAvailable}" th:src="@{/branding/logo}" alt="">
+            <strong th:text="${branding.eventTitle}">BabyGuess</strong>
+        </div>
+        <p th:text="#{admin.branding.proof.body}">The public title supplies the wordmark everywhere.</p>
+        <a class="text-link" th:href="@{/admin#event-details}" th:text="#{admin.branding.proof.titleAction}">Change public title</a>
+        <dl class="brand-proof-status">
+            <div>
+                <dt th:text="#{admin.branding.logo}">Logo</dt>
+                <dd th:text="${branding.logoAvailable} ? #{admin.branding.active} : #{admin.branding.notSet}">Not set</dd>
+            </div>
+            <div>
+                <dt th:text="#{admin.branding.background}">Background</dt>
+                <dd th:text="${branding.backgroundAvailable} ? #{admin.branding.active} : #{admin.branding.notSet}">Not set</dd>
+            </div>
+        </dl>
+    </aside>
+
+    <article class="event-sheet branding-sheet">
+        <header class="sheet-heading branding-heading">
+            <h1 th:text="#{admin.branding.heading}">Shape the event identity</h1>
+            <p th:text="#{admin.branding.intro}">Add one mark and one atmosphere. Replacing an image immediately replaces the public version.</p>
+        </header>
+
+        <div class="save-message" role="status" th:if="${brandingSaved == 'LOGO'}" th:text="#{admin.branding.logo.saved}">Logo replaced.</div>
+        <div class="save-message" role="status" th:if="${brandingSaved == 'BACKGROUND'}" th:text="#{admin.branding.background.saved}">Background replaced.</div>
+        <div class="save-message" role="status" th:if="${brandingRemoved == 'LOGO'}" th:text="#{admin.branding.logo.removed}">Logo removed.</div>
+        <div class="save-message" role="status" th:if="${brandingRemoved == 'BACKGROUND'}" th:text="#{admin.branding.background.removed}">Background removed.</div>
+
+        <div class="delivery-message delivery-message-error" role="alert" th:if="${brandingError}">
+            <span th:if="${brandingError == 'EMPTY'}" th:text="#{admin.branding.error.empty}">Choose an image.</span>
+            <span th:if="${brandingError == 'TOO_LARGE'}" th:text="#{admin.branding.error.tooLarge}">The image is too large.</span>
+            <span th:if="${brandingError == 'UNSUPPORTED_TYPE'}" th:text="#{admin.branding.error.unsupported}">Use PNG or JPEG.</span>
+            <span th:if="${brandingError == 'INVALID_DIMENSIONS'}" th:text="#{admin.branding.error.dimensions}">The dimensions are unsupported.</span>
+            <span th:if="${brandingError == 'CORRUPT_IMAGE'}" th:text="#{admin.branding.error.corrupt}">The file is not a readable image.</span>
+            <span th:if="${brandingError == 'STORAGE_UNAVAILABLE'}" th:text="#{admin.branding.error.storage}">The image could not be stored.</span>
+            <span th:if="${brandingError == 'STALE'}" th:text="#{admin.branding.error.stale}">The event changed. Reload and try again.</span>
+        </div>
+
+        <div class="branding-assets">
+            <section class="branding-asset-row" aria-labelledby="logo-heading">
+                <div class="branding-asset-copy">
+                    <h2 id="logo-heading" th:text="#{admin.branding.logo}">Logo</h2>
+                    <p th:text="#{admin.branding.logo.help}">A transparent, horizontal mark works best beside the event title.</p>
+                    <p class="asset-spec" th:text="#{admin.branding.formatHelp}">PNG or JPEG, up to 5 MB.</p>
+                </div>
+                <div>
+                    <div class="brand-image-proof logo-proof">
+                        <img th:if="${branding.logoAvailable}" th:src="@{/branding/logo}" th:alt="#{admin.branding.logo.previewAlt}">
+                        <p th:unless="${branding.logoAvailable}" th:text="#{admin.branding.logo.empty}">No logo is active.</p>
+                    </div>
+                    <form class="branding-upload-form" method="post" enctype="multipart/form-data" th:action="@{/admin/branding/logo}">
+                        <input type="hidden" name="version" th:value="${branding.configurationVersion}">
+                        <label for="logoFile" th:text="#{admin.branding.logo.choose}">Choose logo image</label>
+                        <input id="logoFile" name="file" type="file" accept="image/png,image/jpeg" required>
+                        <button type="submit" th:text="${branding.logoAvailable} ? #{admin.branding.replace} : #{admin.branding.upload}">Upload image</button>
+                    </form>
+                    <form class="branding-remove-form" method="post" th:if="${branding.logoAvailable}" th:action="@{/admin/branding/logo/remove}">
+                        <input type="hidden" name="version" th:value="${branding.configurationVersion}">
+                        <button class="secondary-button" type="submit" th:text="#{admin.branding.logo.remove}">Remove logo</button>
+                    </form>
+                </div>
+            </section>
+
+            <section class="branding-asset-row background-asset-row" aria-labelledby="background-heading">
+                <div class="branding-asset-copy">
+                    <h2 id="background-heading" th:text="#{admin.branding.background}">Background image</h2>
+                    <p th:text="#{admin.branding.background.help}">Choose a calm, wide image. A readability wash is applied automatically.</p>
+                    <p class="asset-spec" th:text="#{admin.branding.formatHelp}">PNG or JPEG, up to 5 MB.</p>
+                </div>
+                <div>
+                    <div class="brand-image-proof background-proof">
+                        <img th:if="${branding.backgroundAvailable}" th:src="@{/branding/background}" th:alt="#{admin.branding.background.previewAlt}">
+                        <p th:unless="${branding.backgroundAvailable}" th:text="#{admin.branding.background.empty}">No background is active.</p>
+                    </div>
+                    <form class="branding-upload-form" method="post" enctype="multipart/form-data" th:action="@{/admin/branding/background}">
+                        <input type="hidden" name="version" th:value="${branding.configurationVersion}">
+                        <label for="backgroundFile" th:text="#{admin.branding.background.choose}">Choose background image</label>
+                        <input id="backgroundFile" name="file" type="file" accept="image/png,image/jpeg" required>
+                        <button type="submit" th:text="${branding.backgroundAvailable} ? #{admin.branding.replace} : #{admin.branding.upload}">Upload image</button>
+                    </form>
+                    <form class="branding-remove-form" method="post" th:if="${branding.backgroundAvailable}" th:action="@{/admin/branding/background/remove}">
+                        <input type="hidden" name="version" th:value="${branding.configurationVersion}">
+                        <button class="secondary-button" type="submit" th:text="#{admin.branding.background.remove}">Remove background</button>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </article>
+</main>
+</body>
+</html>

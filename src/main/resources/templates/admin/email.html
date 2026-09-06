@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{admin.email.title}">Outgoing email - BabyGuess</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="admin-page mailroom-page">
+<header class="admin-header">
+    <a class="wordmark" th:href="@{/}">
+        <img class="wordmark-logo" th:if="${branding.logoAvailable}" th:src="@{/branding/logo}" alt="">
+        <span class="wordmark-title" th:text="${branding.eventTitle}">BabyGuess</span>
+    </a>
+    <div class="header-actions">
+        <a class="text-link" th:href="@{/admin}" th:text="#{admin.participants.settings}">Event settings</a>
+        <a class="text-link" th:href="@{/admin/branding}" th:text="#{admin.branding.navigation}">Branding</a>
+        <a class="text-link" th:href="@{/admin/participants}" th:text="#{admin.participants.navigation}">Participants</a>
+        <a class="text-link" th:href="@{/admin/reveal}" th:text="#{admin.reveal.navigation}">Reveal</a>
+        <a class="text-link" th:href="@{/}" th:text="#{admin.viewEvent}">View event</a>
+        <form class="language-picker" method="get" th:action="@{/admin/email}">
+            <label class="visually-hidden" for="language" th:text="#{language.label}">Language</label>
+            <select id="language" name="lang" onchange="this.form.submit()">
+                <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{language.english}">English</option>
+                <option value="de" th:selected="${#locale.language == 'de'}" th:text="#{language.german}">Deutsch</option>
+            </select>
+        </form>
+        <form class="inline-form" method="post" th:action="@{/logout}">
+            <button class="text-button" type="submit" th:text="#{admin.signOut}">Sign out</button>
+        </form>
+    </div>
+</header>
+
+<main class="admin-layout mailroom-layout">
+    <aside class="mailroom-status">
+        <p class="status-kicker" th:text="#{admin.email.status.heading}">Delivery status</p>
+        <div class="status-seal" th:classappend="${smtpStatus.ready} ? ' status-seal-ready' : ' status-seal-idle'">
+            <strong th:if="${smtpStatus.ready}" th:text="#{admin.email.status.ready}">Ready</strong>
+            <strong th:unless="${smtpStatus.ready}" th:text="#{admin.email.status.notReady}">Not ready</strong>
+        </div>
+        <p th:if="${smtpStatus.activeSource.name() == 'DATABASE'}" th:text="#{admin.email.status.database}">Using saved settings.</p>
+        <p th:if="${smtpStatus.activeSource.name() == 'ENVIRONMENT'}" th:text="#{admin.email.status.environment}">Using environment settings.</p>
+        <p th:if="${smtpStatus.activeSource.name() == 'NONE'}" th:text="#{admin.email.status.none}">No SMTP service is active.</p>
+        <p class="status-note" th:if="${smtpStatus.passwordStored}" th:text="#{admin.email.status.passwordStored}">A password is stored.</p>
+        <p class="status-note status-note-warning"
+           th:if="${smtpStatus.passwordStored && !smtpStatus.encryptionAvailable}"
+           th:text="#{admin.email.status.keyMissing}">The encryption key is unavailable.</p>
+        <nav th:attr="aria-label=#{admin.email.navigation.sections}">
+            <a href="#connection" th:text="#{admin.email.section.connection}">Connection</a>
+            <a href="#identity" th:text="#{admin.email.section.identity}">Sender and authentication</a>
+            <a href="#test-delivery" th:text="#{admin.email.section.test}">Test delivery</a>
+        </nav>
+    </aside>
+
+    <article class="event-sheet mailroom-sheet">
+        <header class="sheet-heading mailroom-heading">
+            <span class="mailroom-reference" th:text="#{admin.email.reference}">OUTGOING / SMTP</span>
+            <h1 th:text="#{admin.email.heading}">Outgoing email</h1>
+            <p th:text="#{admin.email.intro}">Connect the private mail service used for edit links and reveal results.</p>
+        </header>
+
+        <div class="save-message" role="status" th:if="${smtpSaved}" th:text="#{admin.email.saved}">Email settings saved.</div>
+        <div class="save-message" role="status" th:if="${emailTestResult == 'SENT'}" th:text="#{admin.email.test.sent}">Test email sent.</div>
+        <div class="delivery-message delivery-message-error" role="alert" th:if="${emailTestResult == 'NOT_CONFIGURED'}"
+             th:text="#{admin.email.test.notConfigured}">Email is not configured.</div>
+        <div class="delivery-message delivery-message-error" role="alert" th:if="${emailTestResult == 'CREDENTIAL_UNAVAILABLE'}"
+             th:text="#{admin.email.test.credentialUnavailable}">The saved password cannot be unlocked.</div>
+        <div class="delivery-message delivery-message-error" role="alert" th:if="${emailTestResult == 'AUTHENTICATION_FAILED'}"
+             th:text="#{admin.email.test.authenticationFailed}">The SMTP server rejected the credentials.</div>
+        <div class="delivery-message delivery-message-error" role="alert" th:if="${emailTestResult == 'DELIVERY_FAILED'}"
+             th:text="#{admin.email.test.deliveryFailed}">The test email could not be delivered.</div>
+
+        <form class="event-form mail-form" method="post" th:action="@{/admin/email}" th:object="${smtpForm}">
+            <input type="hidden" th:field="*{version}">
+
+            <div class="error-summary" role="alert" th:if="${#fields.hasAnyErrors()}">
+                <strong th:text="#{admin.email.error.summary}">Check the marked email settings and save again.</strong>
+                <ul th:if="${#fields.hasGlobalErrors()}">
+                    <li th:each="error : ${#fields.globalErrors()}" th:text="${error}">Configuration conflict</li>
+                </ul>
+            </div>
+
+            <label class="mail-enabled-row" for="enabled">
+                <input id="enabled" type="checkbox" th:field="*{enabled}">
+                <span>
+                    <strong th:text="#{admin.email.enabled}">Use these saved SMTP settings</strong>
+                    <small th:text="#{admin.email.enabled.help}">When off, configured spring.mail environment settings remain the fallback.</small>
+                </span>
+            </label>
+
+            <section class="form-section" id="connection">
+                <div class="section-number" aria-hidden="true">01</div>
+                <h2 th:text="#{admin.email.section.connection}">Connection</h2>
+                <div class="mail-connection-grid">
+                    <div class="field mail-host-field">
+                        <label for="host" th:text="#{admin.email.host}">SMTP server</label>
+                        <input id="host" type="text" maxlength="255" autocomplete="off"
+                               placeholder="smtp.example.com" th:field="*{host}" th:errorclass="invalid">
+                        <p class="field-error" th:errors="*{host}">Server error</p>
+                    </div>
+                    <div class="field mail-port-field">
+                        <label for="port" th:text="#{admin.email.port}">Port</label>
+                        <input id="port" type="number" min="1" max="65535" required
+                               th:field="*{port}" th:errorclass="invalid">
+                        <p class="field-error" th:errors="*{port}">Port error</p>
+                    </div>
+                    <div class="field mail-security-field">
+                        <label for="transportSecurity" th:text="#{admin.email.security}">Transport security</label>
+                        <select id="transportSecurity" required th:field="*{transportSecurity}" th:errorclass="invalid">
+                            <option value="NONE" th:text="#{admin.email.security.NONE}">None</option>
+                            <option value="STARTTLS" th:text="#{admin.email.security.STARTTLS}">STARTTLS</option>
+                            <option value="SSL_TLS" th:text="#{admin.email.security.SSL_TLS}">SSL/TLS</option>
+                        </select>
+                        <p class="field-error" th:errors="*{transportSecurity}">Security error</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section" id="identity">
+                <div class="section-number" aria-hidden="true">02</div>
+                <h2 th:text="#{admin.email.section.identity}">Sender and authentication</h2>
+                <div class="field field-wide">
+                    <label for="senderAddress" th:text="#{admin.email.sender}">Sender address</label>
+                    <input id="senderAddress" type="email" maxlength="320" autocomplete="email"
+                           placeholder="hello@example.com" th:field="*{senderAddress}" th:errorclass="invalid">
+                    <p class="field-error" th:errors="*{senderAddress}">Sender error</p>
+                    <p class="field-help" th:text="#{admin.email.sender.help}">Recipients see this in the From line.</p>
+                </div>
+
+                <label class="switch-row mail-auth-row" for="authenticationRequired">
+                    <input id="authenticationRequired" type="checkbox" th:field="*{authenticationRequired}">
+                    <span th:text="#{admin.email.authentication}">The server requires authentication</span>
+                </label>
+
+                <div class="field-row mail-credential-grid">
+                    <div class="field">
+                        <label for="username" th:text="#{admin.email.username}">Username</label>
+                        <input id="username" type="text" maxlength="320" autocomplete="username"
+                               th:field="*{username}" th:errorclass="invalid">
+                        <p class="field-error" th:errors="*{username}">Username error</p>
+                    </div>
+                    <div class="field">
+                        <label for="replacementPassword" th:text="#{admin.email.password}">Password</label>
+                        <input id="replacementPassword" name="replacementPassword" type="password" maxlength="1024"
+                               autocomplete="new-password" th:classappend="${#fields.hasErrors('replacementPassword')} ? 'invalid' : ''">
+                        <p class="field-error" th:errors="*{replacementPassword}">Password error</p>
+                        <p class="field-help" th:if="${smtpStatus.passwordStored}" th:text="#{admin.email.password.keep}">A password is stored. Leave blank to keep it.</p>
+                        <p class="field-help" th:unless="${smtpStatus.passwordStored}" th:text="#{admin.email.password.empty}">No password is stored.</p>
+                    </div>
+                </div>
+
+                <div class="secret-notice" th:classappend="${smtpStatus.encryptionAvailable} ? '' : ' secret-notice-warning'">
+                    <strong th:text="#{admin.email.secret.heading}">Write-only credential</strong>
+                    <p th:if="${smtpStatus.encryptionAvailable}" th:text="#{admin.email.secret.ready}">Passwords are encrypted before they reach the database and are never shown again.</p>
+                    <p th:unless="${smtpStatus.encryptionAvailable}" th:text="#{admin.email.secret.missing}">Set BABYGUESS_SECRET_ENCRYPTION_KEY before saving a password.</p>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <button type="submit" th:text="#{admin.email.save}">Save email settings</button>
+            </div>
+        </form>
+
+        <section class="form-section test-delivery" id="test-delivery">
+            <div class="section-number" aria-hidden="true">03</div>
+            <h2 th:text="#{admin.email.section.test}">Test delivery</h2>
+            <p class="section-help" th:text="#{admin.email.test.help}">Send a harmless message through the currently active connection.</p>
+            <form method="post" th:action="@{/admin/email/test}" th:object="${testEmailForm}">
+                <div class="test-address-row">
+                    <div class="field">
+                        <label for="recipient" th:text="#{admin.email.test.recipient}">Recipient</label>
+                        <input id="recipient" type="email" maxlength="320" required autocomplete="email"
+                               placeholder="you@example.com" th:field="*{recipient}" th:errorclass="invalid">
+                        <p class="field-error" th:errors="*{recipient}">Recipient error</p>
+                    </div>
+                    <button type="submit" th:text="#{admin.email.test.action}">Send test email</button>
+                </div>
+            </form>
+        </section>
+    </article>
+</main>
+</body>
+</html>

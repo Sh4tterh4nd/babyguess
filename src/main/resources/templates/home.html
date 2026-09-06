@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{home.title(${eventTitle})}">BabyGuess — make your prediction</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body th:classappend="${branding.backgroundAvailable} ? ' public-branding-background' : ''">
+<header class="site-header">
+    <a class="wordmark" th:href="@{/}">
+        <img class="wordmark-logo" th:if="${branding.logoAvailable}" th:src="@{/branding/logo}" alt="">
+        <span class="wordmark-title" th:text="${branding.eventTitle}">BabyGuess</span>
+    </a>
+    <div class="header-actions">
+        <form class="language-picker" method="get" action="/">
+            <label class="visually-hidden" for="language" th:text="#{language.label}">Language</label>
+            <select id="language" name="lang" onchange="this.form.submit()">
+                <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{language.english}">English</option>
+                <option value="de" th:selected="${#locale.language == 'de'}" th:text="#{language.german}">Deutsch</option>
+            </select>
+        </form>
+        <a class="text-link" th:href="@{/admin}" th:text="#{nav.admin}">Admin</a>
+    </div>
+</header>
+
+<main class="hero" th:classappend="${eventOpen} ? ' hero-with-form' : ''">
+    <section class="hero-copy">
+        <p class="event-prompt" th:text="#{home.heading}">What do you think?</p>
+        <h1 th:text="${eventTitle}">BabyGuess</h1>
+        <p class="intro" th:text="#{home.intro}">Make your private prediction before the big hello.</p>
+
+        <div class="status-note" role="status" th:if="${!eventConfigured}">
+            <span class="status-dot" aria-hidden="true"></span>
+            <div>
+                <strong th:text="#{home.status}">The guessing page is being prepared.</strong>
+                <p th:text="#{home.status.detail}">The host will open predictions here.</p>
+            </div>
+        </div>
+        <div class="status-note" role="status" th:if="${eventOpen}">
+            <span class="status-dot status-open" aria-hidden="true"></span>
+            <div>
+                <strong th:text="#{home.status.open}">Predictions are open.</strong>
+                <p th:text="#{home.status.open.detail(${deadline})}">Guesses close at the deadline.</p>
+            </div>
+        </div>
+        <div class="status-note" role="status" th:if="${eventConfigured and !eventOpen}">
+            <span class="status-dot status-closed" aria-hidden="true"></span>
+            <div>
+                <strong th:text="#{home.status.closed}">Predictions are closed.</strong>
+                <p th:text="#{home.status.closed.detail}">Guesses stay private until the reveal.</p>
+            </div>
+        </div>
+    </section>
+
+    <aside class="prediction-ticket submission-ticket" th:if="${eventOpen}" aria-labelledby="submission-heading">
+        <div class="ticket-punch" aria-hidden="true"></div>
+        <h2 id="submission-heading" th:text="#{submission.heading}">Seal your prediction</h2>
+
+        <form class="submission-form" method="post" th:action="@{/submit}" th:object="${submissionForm}">
+            <div class="error-summary" role="alert" th:if="${#fields.hasAnyErrors()}">
+                <strong th:text="#{submission.error.summary}">Check the marked details and save again.</strong>
+                <ul>
+                    <li th:each="error : ${#fields.allErrors()}" th:text="${error}">Validation error</li>
+                </ul>
+            </div>
+
+            <div class="field">
+                <label for="displayName" th:text="#{submission.displayName}">Your public display name</label>
+                <input id="displayName" type="text" maxlength="120" required autocomplete="name"
+                       th:field="*{displayName}" th:errorclass="invalid">
+            </div>
+
+            <div class="field">
+                <label for="emailAddress" th:text="#{submission.email}">Your private email address</label>
+                <input id="emailAddress" type="email" maxlength="320" required autocomplete="email"
+                       th:field="*{emailAddress}" th:errorclass="invalid">
+                <p class="field-help" th:text="#{submission.email.help}">Used for the edit link and reveal.</p>
+            </div>
+
+            <fieldset class="name-fields">
+                <legend th:text="#{submission.names}">Baby name guesses</legend>
+                <div class="field" th:each="index : ${#numbers.sequence(0, maximumNameGuesses - 1)}">
+                    <label th:for="${'nameGuess-' + index}" th:text="#{submission.name.position(${index + 1})}">Guess</label>
+                    <input type="text" maxlength="160" autocomplete="off"
+                           th:id="${'nameGuess-' + index}"
+                           th:required="${index == 0}"
+                           th:field="*{nameGuesses[__${index}__]}">
+                </div>
+                <p class="field-help" th:text="#{submission.names.help}">Order matters; leave unused lines blank.</p>
+            </fieldset>
+
+            <div class="field" th:if="${sexEnabled}">
+                <label for="predictedSex">
+                    <span th:text="#{submission.sex}">Sex</span>
+                    <small th:text="#{submission.optional}">Optional</small>
+                </label>
+                <select id="predictedSex" th:field="*{predictedSex}">
+                    <option value="" th:text="#{submission.sex.none}">No prediction</option>
+                    <option value="GIRL" th:text="#{submission.sex.girl}">Girl</option>
+                    <option value="BOY" th:text="#{submission.sex.boy}">Boy</option>
+                </select>
+            </div>
+
+            <div class="field" th:if="${birthDateEnabled}">
+                <label for="predictedBirthDate">
+                    <span th:text="#{submission.birthDate}">Birth date</span>
+                    <small th:text="#{submission.optional}">Optional</small>
+                </label>
+                <input id="predictedBirthDate" type="date" th:field="*{predictedBirthDate}">
+            </div>
+
+            <div class="field" th:if="${birthWeightEnabled}">
+                <label for="predictedBirthWeightGrams">
+                    <span th:text="#{submission.birthWeight}">Birth weight in grams</span>
+                    <small th:text="#{submission.optional}">Optional</small>
+                </label>
+                <input id="predictedBirthWeightGrams" type="number" min="1" step="1" inputmode="numeric"
+                       th:field="*{predictedBirthWeightGrams}" th:errorclass="invalid">
+            </div>
+
+            <button type="submit" th:text="#{submission.action}">Save my prediction</button>
+            <p class="privacy-promise" th:text="#{submission.privacy}">Your guesses remain private.</p>
+        </form>
+    </aside>
+
+    <aside class="prediction-ticket" th:unless="${eventOpen}" aria-labelledby="ticket-heading">
+        <div class="ticket-punch" aria-hidden="true"></div>
+        <h2 id="ticket-heading" th:text="#{home.ticket.label}">Your prediction stays sealed</h2>
+        <dl>
+            <div><dt th:text="#{home.ticket.name}">Name</dt><dd aria-hidden="true"></dd></div>
+            <div><dt th:text="#{home.ticket.date}">Date</dt><dd aria-hidden="true"></dd></div>
+            <div><dt th:text="#{home.ticket.weight}">Weight</dt><dd aria-hidden="true"></dd></div>
+        </dl>
+        <p class="privacy-promise" th:text="#{home.ticket.promise}">Nobody else sees a guess before the reveal.</p>
+    </aside>
+</main>
+</body>
+</html>

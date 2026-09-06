@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{reveal.title(${reveal.eventTitle})}">The reveal - BabyGuess</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="public-reveal-page" th:classappend="${branding.backgroundAvailable} ? ' public-branding-background' : ''">
+<header class="site-header reveal-site-header">
+    <a class="wordmark" th:href="@{/results}">
+        <img class="wordmark-logo" th:if="${branding.logoAvailable}" th:src="@{/branding/logo}" alt="">
+        <span class="wordmark-title" th:text="${branding.eventTitle}">BabyGuess</span>
+    </a>
+    <div class="header-actions">
+        <form class="language-picker" method="get" th:action="@{/results}">
+            <label class="visually-hidden" for="language" th:text="#{language.label}">Language</label>
+            <select id="language" name="lang" onchange="this.form.submit()">
+                <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{language.english}">English</option>
+                <option value="de" th:selected="${#locale.language == 'de'}" th:text="#{language.german}">Deutsch</option>
+            </select>
+        </form>
+        <a class="text-link" th:href="@{/admin}" th:text="#{nav.admin}">Admin</a>
+    </div>
+</header>
+
+<main class="public-reveal">
+    <section class="opened-envelope" aria-labelledby="reveal-name">
+        <div class="envelope-flap" aria-hidden="true"></div>
+        <div class="reveal-letter">
+            <p class="reveal-kicker" th:text="#{reveal.announcement}">The little mystery is solved</p>
+            <h1 id="reveal-name" th:text="${reveal.actualName}">Sarah</h1>
+            <p class="reveal-event-title" th:text="${reveal.eventTitle}">A little mystery</p>
+            <dl class="reveal-facts">
+                <div th:if="${reveal.sexEnabled}">
+                    <dt th:text="#{submission.sex}">Sex</dt>
+                    <dd th:if="${reveal.actualSex == null}" th:text="#{admin.reveal.details.awaiting}">Awaiting</dd>
+                    <dd th:if="${reveal.actualSex != null && reveal.actualSex.name() == 'GIRL'}" th:text="#{submission.sex.girl}">Girl</dd>
+                    <dd th:if="${reveal.actualSex != null && reveal.actualSex.name() == 'BOY'}" th:text="#{submission.sex.boy}">Boy</dd>
+                </div>
+                <div th:if="${reveal.birthDateEnabled}">
+                    <dt th:text="#{submission.birthDate}">Birth date</dt>
+                    <dd th:text="${reveal.actualBirthDate != null ? reveal.actualBirthDate : #messages.msg('admin.reveal.details.awaiting')}">Awaiting</dd>
+                </div>
+                <div th:if="${reveal.birthWeightEnabled}">
+                    <dt th:text="#{submission.birthWeight}">Birth weight</dt>
+                    <dd th:text="${reveal.actualBirthWeightGrams != null ? reveal.actualBirthWeightGrams + ' g' : #messages.msg('admin.reveal.details.awaiting')}">Awaiting</dd>
+                </div>
+            </dl>
+        </div>
+    </section>
+
+    <section class="public-leaderboard" aria-labelledby="leaderboard-heading">
+        <header class="public-leaderboard-heading">
+            <div>
+                <p th:text="#{reveal.results.kicker}">The guesses, opened</p>
+                <h2 id="leaderboard-heading" th:text="#{reveal.results.heading}">Leaderboard</h2>
+            </div>
+            <p th:text="#{reveal.results.intro}">Shared scores share a place.</p>
+        </header>
+
+        <p class="public-results-empty" th:if="${reveal.leaderboard.empty}"
+           th:text="#{reveal.results.empty}">There were no eligible predictions.</p>
+
+        <ol class="public-leaderboard-list" th:if="${!reveal.leaderboard.empty}">
+            <li th:each="entry : ${reveal.leaderboard}" th:value="${entry.place}"
+                th:classappend="${entry.place == 1} ? ' public-winner' : ''">
+                <header class="public-result-line">
+                    <span class="public-place" th:text="${entry.place}">1</span>
+                    <div>
+                        <h3 th:text="${entry.displayName}">Alice</h3>
+                        <p th:if="${entry.exactName}" th:text="#{reveal.name.exact(${entry.matchedName})}">Exact name</p>
+                        <p th:if="${entry.equivalentName}" th:text="#{reveal.name.equivalent(${entry.matchedName})}">Equivalent name</p>
+                        <p th:if="${!entry.exactName && !entry.equivalentName}" th:text="#{reveal.name.none}">No name match</p>
+                    </div>
+                    <strong th:text="#{reveal.points(${entry.totalScore})}">3 points</strong>
+                </header>
+
+                <details class="public-breakdown" th:open="${entry.place == 1}">
+                    <summary th:text="#{reveal.breakdown}">See the score</summary>
+                    <dl>
+                        <div>
+                            <dt th:text="#{admin.scoring.name}">Name</dt>
+                            <dd>
+                                <span th:if="${entry.exactName}" th:text="#{reveal.name.exact(${entry.matchedName})}">Exact</span>
+                                <span th:if="${entry.equivalentName}" th:text="#{reveal.name.equivalent(${entry.matchedName})}">Equivalent</span>
+                                <span th:if="${!entry.exactName && !entry.equivalentName}" th:text="#{reveal.name.none}">No match</span>
+                                <strong th:text="#{reveal.points(${entry.nameScore})}">1 point</strong>
+                            </dd>
+                        </div>
+                        <div th:if="${reveal.sexEnabled}" th:with="result=${entry.sex}">
+                            <dt th:text="#{submission.sex}">Sex</dt>
+                            <dd>
+                                <span th:if="${result.awaiting}" th:text="#{admin.reveal.preview.awaiting}">Awaiting actual result</span>
+                                <span th:if="${result.missing}" th:text="#{admin.reveal.preview.missing}">No prediction</span>
+                                <span th:if="${result.exact && result.prediction == 'GIRL'}" th:text="#{submission.sex.girl}">Girl</span>
+                                <span th:if="${result.exact && result.prediction == 'BOY'}" th:text="#{submission.sex.boy}">Boy</span>
+                                <span th:if="${result.wrong && result.prediction == 'GIRL'}" th:text="#{admin.reveal.preview.wrong(${#messages.msg('submission.sex.girl')})}">Girl - incorrect</span>
+                                <span th:if="${result.wrong && result.prediction == 'BOY'}" th:text="#{admin.reveal.preview.wrong(${#messages.msg('submission.sex.boy')})}">Boy - incorrect</span>
+                                <strong th:text="#{reveal.points(${result.score})}">1 point</strong>
+                            </dd>
+                        </div>
+                        <div th:if="${reveal.birthDateEnabled}" th:with="result=${entry.birthDate}">
+                            <dt th:text="#{submission.birthDate}">Birth date</dt>
+                            <dd>
+                                <span th:if="${result.awaiting}" th:text="#{admin.reveal.preview.awaiting}">Awaiting actual result</span>
+                                <span th:if="${result.missing}" th:text="#{admin.reveal.preview.missing}">No prediction</span>
+                                <span th:if="${result.exact}" th:text="#{admin.reveal.preview.exact(${result.prediction})}">Exact</span>
+                                <span th:if="${result.close}" th:text="#{admin.reveal.preview.date.close(${result.prediction}, ${result.difference}, ${result.percentage})}">Close</span>
+                                <span th:if="${result.wrong}" th:text="#{admin.reveal.preview.date.wrong(${result.prediction}, ${result.difference})}">Incorrect</span>
+                                <strong th:text="#{reveal.points(${result.score})}">1 point</strong>
+                            </dd>
+                        </div>
+                        <div th:if="${reveal.birthWeightEnabled}" th:with="result=${entry.birthWeight}">
+                            <dt th:text="#{submission.birthWeight}">Birth weight</dt>
+                            <dd>
+                                <span th:if="${result.awaiting}" th:text="#{admin.reveal.preview.awaiting}">Awaiting actual result</span>
+                                <span th:if="${result.missing}" th:text="#{admin.reveal.preview.missing}">No prediction</span>
+                                <span th:if="${result.exact}" th:text="#{admin.reveal.preview.exact(${result.prediction})}">Exact</span>
+                                <span th:if="${result.close}" th:text="#{admin.reveal.preview.weight.close(${result.prediction}, ${result.difference}, ${result.percentage})}">Close</span>
+                                <span th:if="${result.wrong}" th:text="#{admin.reveal.preview.weight.wrong(${result.prediction}, ${result.difference})}">Incorrect</span>
+                                <strong th:text="#{reveal.points(${result.score})}">1 point</strong>
+                            </dd>
+                        </div>
+                    </dl>
+                </details>
+            </li>
+        </ol>
+    </section>
+</main>
+</body>
+</html>
