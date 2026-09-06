@@ -18,6 +18,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -28,6 +29,7 @@ public class HomeController {
     private final ParticipantLinkDeliveryService deliveryService;
     private final SubmissionFormValidator formValidator;
     private final PublicUrlProperties publicUrlProperties;
+    private final CaptchaVerifier captchaVerifier;
     private final Clock clock;
 
     public HomeController(
@@ -36,12 +38,14 @@ public class HomeController {
             ParticipantLinkDeliveryService deliveryService,
             SubmissionFormValidator formValidator,
             PublicUrlProperties publicUrlProperties,
+            CaptchaVerifier captchaVerifier,
             Clock clock) {
         this.eventService = eventService;
         this.submissionService = submissionService;
         this.deliveryService = deliveryService;
         this.formValidator = formValidator;
         this.publicUrlProperties = publicUrlProperties;
+        this.captchaVerifier = captchaVerifier;
         this.clock = clock;
     }
 
@@ -64,6 +68,7 @@ public class HomeController {
     String submit(
             @Valid @ModelAttribute("submissionForm") SubmissionForm form,
             BindingResult bindingResult,
+            @RequestParam(value = "cap-token", required = false) String captchaToken,
             Model model,
             Locale locale,
             RedirectAttributes redirectAttributes) {
@@ -76,6 +81,19 @@ public class HomeController {
             form.ensureNameSlots(event.getMaximumNameGuesses());
             addEventModel(model, event, locale);
             return "home";
+        }
+
+        if (captchaVerifier.enabled()) {
+            try {
+                captchaVerifier.verify(captchaToken);
+            } catch (CaptchaVerifier.CaptchaVerificationException exception) {
+                bindingResult.reject(exception.failure() == CaptchaVerifier.CaptchaFailure.UNAVAILABLE
+                        ? "submission.captchaUnavailable"
+                        : "submission.captchaRejected");
+                form.ensureNameSlots(event.getMaximumNameGuesses());
+                addEventModel(model, event, locale);
+                return "home";
+            }
         }
 
         boolean existingParticipant;
@@ -119,6 +137,10 @@ public class HomeController {
         model.addAttribute("sexEnabled", event.isSexEnabled());
         model.addAttribute("birthDateEnabled", event.isBirthDateEnabled());
         model.addAttribute("birthWeightEnabled", event.isBirthWeightEnabled());
+        model.addAttribute("captchaEnabled", captchaVerifier.enabled());
+        if (captchaVerifier.enabled()) {
+            model.addAttribute("captchaEndpoint", captchaVerifier.widgetEndpoint());
+        }
         if (configured) {
             var zone = ZoneId.of(event.getEventTimezone());
             var formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withLocale(locale);

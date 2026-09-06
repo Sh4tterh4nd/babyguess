@@ -37,6 +37,10 @@ babyguess:
     password: "${BABYGUESS_ADMIN_PASSWORD:admin12345678}"
   tokens:
     secret: "${BABYGUESS_TOKEN_SECRET:development-only-token-secret-change-me}"
+  captcha:
+    instance-url: "${BABYGUESS_CAPTCHA_URL:}"
+    site-key: "${BABYGUESS_CAPTCHA_SITE_KEY:}"
+    secret-key: "${BABYGUESS_CAPTCHA_SECRET_KEY:}"
   public:
     base-url: "${BABYGUESS_PUBLIC_BASE_URL:http://localhost:8080/}"
   mail:

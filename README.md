@@ -87,6 +87,29 @@ Run the test suite with:
 .\gradlew.bat test
 ```
 
+## Optional captcha
+
+The public submission form can require a [Cap](https://trycap.dev) challenge, which is a self-hosted,
+proof-of-work captcha. It is off unless a deployment supplies all three values:
+
+- `BABYGUESS_CAPTCHA_URL` - the base URL of your Cap Standalone instance, for example
+  `https://cap.example.com`.
+- `BABYGUESS_CAPTCHA_SITE_KEY` - the site key created in the Cap dashboard.
+- `BABYGUESS_CAPTCHA_SECRET_KEY` - that site key's secret. It is sent only to the Cap instance and is
+  never rendered into a page or written to the log.
+
+With all three present, the widget appears above the submission button and the server verifies the
+submitted token against `<instance>/<site key>/siteverify` before storing anything. Leave any of them
+blank and the form behaves exactly as before, with no widget and no verification.
+
+Verification fails closed. A refused token, an unexpected answer, and an unreachable Cap instance all
+reject the submission, so the check cannot be skipped by blocking the application's outbound request.
+Participants see a localized message and their guess is not saved. Keep that in mind before pointing a
+live event at a Cap instance that might be down.
+
+The browser loads the widget from `cdn.jsdelivr.net`, so the participant's browser needs to reach that
+CDN and your Cap instance. The application server itself only needs to reach the Cap instance.
+
 ## Production profile
 
 The `prod` profile requires these environment variables:
