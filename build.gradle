@@ -48,6 +48,15 @@ jib {
         image = providers.gradleProperty('image').getOrElse('ghcr.io/sh4tterh4nd/babyguess')
         tags = [version, 'latest']
     }
+    extraDirectories {
+        paths {
+            path {
+                from = file('src/main/jib')
+                into = '/'
+            }
+        }
+        permissions = ['/app/data': '777', '/app/data/branding': '777']
+    }
     container {
         ports = ['8080']
         creationTime = 'USE_CURRENT_TIMESTAMP'

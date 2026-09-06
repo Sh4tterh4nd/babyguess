@@ -72,15 +72,24 @@ jobs:
         id: image
         run: |
           version="${GITHUB_REF_NAME#v}"
-          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-          # Only a final release moves the floating "latest" tag. A pre-release such as
-          # v1.2.0-rc1 re-states its own version so the build configuration's default
-          # tag list ("0.1.0-SNAPSHOT", "latest") is always overridden.
+          if [ -z "${version}" ]; then
+            echo "::error::Could not derive an image version from tag '${GITHUB_REF_NAME}'."
+            exit 1
+          fi
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          # Jib receives the complete tag list, the version included. On the push path Jib
+          # treats "jib.to.tags" as the authoritative set rather than as additions to the
+          # tag in "jib.to.image", so naming the version here is what actually publishes it.
+          # A final release also moves the floating "latest" tag; a pre-release such as
+          # v1.2.0-rc1 publishes only its own version.
           case "${version}" in
-            *-*) echo "tags=${version}" >> "$GITHUB_OUTPUT" ;;
-            *)   echo "tags=latest" >> "$GITHUB_OUTPUT" ;;
+            *-*) tags="${version}" ;;
+            *)   tags="${version},latest" ;;
           esac
+          echo "image=${image}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tags=${tags}" >> "$GITHUB_OUTPUT"
+          echo "Publishing ${image} with tags: ${tags}"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -102,7 +111,8 @@ jobs:
             echo "### Published image"
             echo
             echo '```'
-            echo "${{ steps.image.outputs.image }}:${{ steps.image.outputs.version }}"
-            echo "${{ steps.image.outputs.image }}:${{ steps.image.outputs.tags }}"
+            for tag in $(echo "${{ steps.image.outputs.tags }}" | tr ',' ' '); do
+              echo "${{ steps.image.outputs.image }}:${tag}"
+            done
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

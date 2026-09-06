@@ -18,6 +18,9 @@ out/
 
 # Application runtime data and uploads
 data/
+# The image seeds an empty, world-writable /app/data so a fresh Docker volume
+# inherits its ownership. It must stay in version control.
+!src/main/jib/app/data/
 uploads/
 logs/
 *.log
