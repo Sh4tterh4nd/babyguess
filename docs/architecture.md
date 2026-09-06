@@ -5,14 +5,14 @@
 - Java 21 is the source and container runtime baseline. The build also runs on newer supported JDKs.
 - Spring Boot 4.1.1 provides Spring MVC, Thymeleaf, Security, Validation, Mail, and Data JPA integration.
 - Gradle 9.7.1 is checked in through the wrapper. Jib 3.5.4 creates the container image.
-- The application listens on port `8088` by default.
+- The application listens on port `8080` by default, overridable through `BABYGUESS_PORT`.
 
 ## Persistence
 
-Flyway owns the database schema; Hibernate schema generation is disabled. PostgreSQL is the production database.
-A file-backed H2 database in PostgreSQL compatibility mode keeps local development self-contained. Production
-and local environments therefore run the same migration scripts, while PostgreSQL remains the deployment
-target.
+Flyway owns the database schema; Hibernate schema generation is disabled. A file-backed H2 database in
+PostgreSQL compatibility mode is the default for both local development and the single-container production
+deployment, so every environment runs the same migration scripts. The PostgreSQL driver is also supported for
+deployments that outgrow a single instance; an H2-backed service must never be scaled beyond one container.
 
 Submission versions are append-only at the application boundary. Each version has its own ordered name-guess
 rows and optional category values. The effective version is computed as the latest server timestamp at or before

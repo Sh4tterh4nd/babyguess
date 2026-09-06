@@ -20,7 +20,7 @@ spring:
       max-request-size: 7MB
 
 server:
-  port: "${BABYGUESS_PORT:8088}"
+  port: "${BABYGUESS_PORT:8080}"
   forward-headers-strategy: framework
   servlet:
     session:
@@ -38,7 +38,7 @@ babyguess:
   tokens:
     secret: "${BABYGUESS_TOKEN_SECRET:development-only-token-secret-change-me}"
   public:
-    base-url: "${BABYGUESS_PUBLIC_BASE_URL:http://localhost:8088/}"
+    base-url: "${BABYGUESS_PUBLIC_BASE_URL:http://localhost:8080/}"
   mail:
     from: "${BABYGUESS_MAIL_FROM:}"
   secrets:

@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: "${BABYGUESS_DATABASE_URL}"
-    username: "${BABYGUESS_DATABASE_USERNAME}"
-    password: "${BABYGUESS_DATABASE_PASSWORD}"
+    url: "${BABYGUESS_DATABASE_URL:jdbc:h2:file:./data/babyguess;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH}"
+    username: "${BABYGUESS_DATABASE_USERNAME:sa}"
+    password: "${BABYGUESS_DATABASE_PASSWORD:}"
   thymeleaf:
     cache: true
 

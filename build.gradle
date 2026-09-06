@@ -45,7 +45,8 @@ jib {
         image = 'eclipse-temurin:21-jre'
     }
     to {
-        image = providers.gradleProperty('image').getOrElse('babyguess:local')
+        image = providers.gradleProperty('image').getOrElse('loccalhost/babyguess')
+        tags = [version, 'latest']
     }
     container {
         ports = ['8080']
