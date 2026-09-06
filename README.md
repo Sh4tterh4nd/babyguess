@@ -102,14 +102,17 @@ The `prod` profile requires these environment variables:
 - `BABYGUESS_BRANDING_DIRECTORY` - optional branding storage path; defaults to the persistent
   `./data/branding` directory.
 
-Secure session cookies are enabled by default in production. Build and push `shatterhand/babyguess` to Docker
-Hub without a Docker daemon using:
+Secure session cookies are enabled by default in production. Images are published to the GitHub Container
+Registry; BabyGuess is not published to Docker Hub. Build and push `ghcr.io/sh4tterh4nd/babyguess` without
+a Docker daemon using:
 
 ```powershell
 .\gradlew.bat jib
 ```
 
-Jib publishes both the Gradle project version and `latest` tags configured in `build.gradle`.
+Jib publishes both the Gradle project version and `latest` tags configured in `build.gradle`. A manual push
+needs a GitHub personal access token with the `write:packages` scope; tagged releases publish automatically
+through [continuous integration](#continuous-integration).
 
 ## Continuous integration
 

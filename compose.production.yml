@@ -13,7 +13,7 @@ services:
       - babyguess-data:/app/data
 
   babyguess:
-    image: shatterhand/babyguess:${BABYGUESS_IMAGE_TAG:-latest}
+    image: ghcr.io/sh4tterh4nd/babyguess:${BABYGUESS_IMAGE_TAG:-latest}
     pull_policy: always
     restart: unless-stopped
     depends_on:

@@ -45,7 +45,7 @@ jib {
         image = 'eclipse-temurin:21-jre'
     }
     to {
-        image = providers.gradleProperty('image').getOrElse('loccalhost/babyguess')
+        image = providers.gradleProperty('image').getOrElse('ghcr.io/sh4tterh4nd/babyguess')
         tags = [version, 'latest']
     }
     container {

@@ -21,7 +21,7 @@ class ComposeConfigurationTest {
         var environment = map(application.get("environment"));
 
         assertThat(application.get("image"))
-                .isEqualTo("shatterhand/babyguess:${BABYGUESS_IMAGE_TAG:-latest}");
+                .isEqualTo("ghcr.io/sh4tterh4nd/babyguess:${BABYGUESS_IMAGE_TAG:-latest}");
         assertThat(list(application.get("ports")))
                 .containsExactly("127.0.0.1:${BABYGUESS_HOST_PORT:-8080}:8080");
         assertThat(list(application.get("volumes"))).containsExactly("babyguess-data:/app/data");
@@ -42,7 +42,7 @@ class ComposeConfigurationTest {
         var environment = map(application.get("environment"));
 
         assertThat(application.get("image"))
-                .isEqualTo("shatterhand/babyguess:${BABYGUESS_IMAGE_TAG:-dev}");
+                .isEqualTo("ghcr.io/sh4tterh4nd/babyguess:${BABYGUESS_IMAGE_TAG:-dev}");
         assertThat(environment.get("SPRING_PROFILES_ACTIVE"))
                 .isEqualTo("${SPRING_PROFILES_ACTIVE:-dev}");
         assertThat(environment.get("BABYGUESS_SECURE_COOKIES"))
