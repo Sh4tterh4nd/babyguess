@@ -2,6 +2,7 @@ package ch.babyguess.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -116,6 +117,21 @@ class ParticipantFlowTest {
     }
 
     @Test
+    void theRankingHintAppearsOnlyWhileRankedScoringIsOn() throws Exception {
+        configureDeadline(Instant.now().plusSeconds(3600), true);
+        mockMvc.perform(get("/"))
+                .andExpect(model().attribute("rankedNames", true))
+                .andExpect(content().string(containsString("Order counts")))
+                .andExpect(content().string(containsString("Leave unused lines blank")));
+
+        configureDeadline(Instant.now().plusSeconds(3600), false);
+        mockMvc.perform(get("/"))
+                .andExpect(model().attribute("rankedNames", false))
+                .andExpect(content().string(not(containsString("Order counts"))))
+                .andExpect(content().string(containsString("Leave unused lines blank")));
+    }
+
+    @Test
     void thanksPageRendersBothOutcomes() throws Exception {
         mockMvc.perform(get("/thanks"))
                 .andExpect(status().isOk())
@@ -224,6 +240,10 @@ class ParticipantFlowTest {
     }
 
     private void configureDeadline(Instant deadline) {
+        configureDeadline(deadline, true);
+    }
+
+    private void configureDeadline(Instant deadline, boolean rankedNameScoring) {
         var current = eventService.get();
         eventService.update(new EventConfigurationUpdate(
                 current.getVersion(),
@@ -231,7 +251,7 @@ class ParticipantFlowTest {
                 deadline,
                 "Europe/Zurich",
                 3,
-                true,
+                rankedNameScoring,
                 BigDecimal.ONE,
                 true,
                 BigDecimal.ONE,

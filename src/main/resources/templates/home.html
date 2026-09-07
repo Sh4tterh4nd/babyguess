@@ -86,7 +86,10 @@
                            th:required="${index == 0}"
                            th:field="*{nameGuesses[__${index}__]}">
                 </div>
-                <p class="field-help" th:text="#{submission.names.help}">Order matters; leave unused lines blank.</p>
+                <p class="field-help">
+                    <span th:if="${rankedNames}" th:text="#{submission.names.help.ranked}">Order counts.</span>
+                    <span th:text="#{submission.names.help}">Leave unused lines blank.</span>
+                </p>
             </fieldset>
 
             <div class="field" th:if="${sexEnabled}">

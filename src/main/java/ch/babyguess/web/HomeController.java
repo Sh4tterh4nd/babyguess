@@ -134,6 +134,7 @@ public class HomeController {
         model.addAttribute("eventConfigured", configured);
         model.addAttribute("eventOpen", isOpen(event));
         model.addAttribute("maximumNameGuesses", event.getMaximumNameGuesses());
+        model.addAttribute("rankedNames", event.isRankedNameScoring());
         model.addAttribute("sexEnabled", event.isSexEnabled());
         model.addAttribute("birthDateEnabled", event.isBirthDateEnabled());
         model.addAttribute("birthWeightEnabled", event.isBirthWeightEnabled());
