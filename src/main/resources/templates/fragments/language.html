@@ -1,0 +1,12 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- The options for every language selector. Kept in one place so a new language is added once. -->
+<th:block th:fragment="options">
+    <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{language.english}">English</option>
+    <option value="de" th:selected="${#locale.language == 'de'}" th:text="#{language.german}">Deutsch</option>
+    <option value="es" th:selected="${#locale.language == 'es'}" th:text="#{language.spanish}">Español</option>
+    <option value="pt" th:selected="${#locale.language == 'pt'}" th:text="#{language.portuguese}">Português</option>
+</th:block>
+</body>
+</html>

@@ -77,6 +77,9 @@ ordering affects presentation only after the place-defining comparisons are tied
 Only `/admin/**` requires the configured administrator session at present. CSRF protection remains enabled.
 Session cookies are HTTP-only and become secure by default in the production profile.
 
-All current UI text lives in English and German message bundles. A language query parameter writes a one-year
-cookie; unsupported locales fall back to English. The locale used for a participant's first saved submission is
-retained for future edit-link messages.
+All UI text lives in English, German, Spanish, and Portuguese message bundles that are kept key-for-key
+identical; a test fails the build when one drifts. A language query parameter writes a one-year cookie and wins
+on later visits. Without that cookie the browser's own preference order decides, matching on language alone so
+regional variants such as `de-CH` and `pt-BR` resolve to their base language, and anything unsupported falls
+back to English. The locale used for a participant's first saved submission is retained for future edit-link
+and reveal messages.

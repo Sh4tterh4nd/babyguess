@@ -17,7 +17,8 @@ The current implementation includes:
   guesses, and accepted name variants.
 - Exact/equivalent name matching, including the required `Sara`/`Sarah` and `Rebecca`/`Rebeka` variants.
 - High-precision category scoring and effective-submission selection at a deadline.
-- English and German UI scaffolding, a protected admin route, and a responsive public landing page.
+- English, German, Spanish, and Portuguese UI text, browser-language detection with a cookie override, a
+  protected admin route, and a responsive public landing page.
 - An authenticated event-settings form for the deadline, timezone, prediction categories, weights, and
   tolerances, with server-side validation and stale-update protection.
 - A deadline-aware public submission form, case-insensitive participant identity, immutable submission versions,

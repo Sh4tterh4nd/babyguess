@@ -1,6 +1,7 @@
 package ch.babyguess.submission;
 
 import ch.babyguess.event.EventConfiguration;
+import ch.babyguess.config.SupportedLanguages;
 import ch.babyguess.event.EventConfigurationService;
 import ch.babyguess.mail.ParticipantLinkDelivery;
 import ch.babyguess.mail.ParticipantLinkDeliveryRepository;
@@ -199,8 +200,6 @@ public class ParticipantSubmissionService {
     }
 
     private Locale supportedLocale(Locale locale) {
-        return locale != null && Locale.GERMAN.getLanguage().equals(locale.getLanguage())
-                ? Locale.GERMAN
-                : Locale.ENGLISH;
+        return SupportedLanguages.resolve(locale);
     }
 }

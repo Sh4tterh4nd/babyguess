@@ -21,8 +21,7 @@
         <form class="language-picker" method="get" th:action="@{/admin}">
             <label class="visually-hidden" for="language" th:text="#{language.label}">Language</label>
             <select id="language" name="lang" onchange="this.form.submit()">
-                <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{language.english}">English</option>
-                <option value="de" th:selected="${#locale.language == 'de'}" th:text="#{language.german}">Deutsch</option>
+                <th:block th:replace="~{fragments/language :: options}"></th:block>
             </select>
         </form>
         <form class="inline-form" method="post" th:action="@{/logout}">

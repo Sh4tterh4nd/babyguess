@@ -337,8 +337,8 @@ retry failed messages without resending successful ones.
 
 ## 13. Localization
 
-- Initial user-interface languages are English and German.
-- Portuguese and Spanish are planned, so user-facing text must not be hardcoded into templates or JavaScript.
+- The user-interface languages are English, German, Spanish, and Portuguese.
+- Further languages remain possible, so user-facing text must not be hardcoded into templates or JavaScript.
 - On first visit, the application chooses the best supported language from the browser's language preferences.
 - Unsupported browser languages fall back to English.
 - A visible language selector is available on public, participant, and admin pages.
@@ -398,8 +398,8 @@ The first releasable version is complete when:
 11. The first reveal sends each qualifying participant one localized result email without their total score or
     place.
 12. SMTP can be configured and tested through the protected admin interface.
-13. English and German are complete, browser language is detected, and a cookie preserves a manual language
-    choice.
+13. English, German, Spanish, and Portuguese are complete, browser language is detected, and a cookie
+    preserves a manual language choice.
 14. The application builds and runs independently and can produce its own Jib container image.
 
 ## 17. Explicitly out of scope for the initial release
@@ -410,4 +410,3 @@ The first releasable version is complete when:
 - Social login.
 - Public participant email addresses.
 - Native mobile applications.
-- Portuguese and Spanish translations, although the localization design must allow them to be added later.
