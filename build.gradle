@@ -29,7 +29,15 @@ dependencies {
 
     runtimeOnly 'org.flywaydb:flyway-database-postgresql'
     runtimeOnly 'org.postgresql:postgresql'
-    runtimeOnly 'com.h2database:h2'
+    // H2 2.4.240 compiles CHECK constraints with the connection that created them.
+    // Evaluating an IN constraint from another pooled connection can then fail with
+    // "The database has been closed" (h2database/h2database#4291, #4342).
+    // Keep the last unaffected release until H2 publishes a fixed version.
+    runtimeOnly('com.h2database:h2') {
+        version {
+            strictly '2.3.232'
+        }
+    }
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
